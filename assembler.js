@@ -14,15 +14,15 @@
 'use strict';
 
 function SimulatorWidget(node) {
-  var $node = $(node);
-  var ui = UI();
-  var display = Display();
-  var screen = Screen();
-  var memory = Memory();
-  var labels = Labels();
-  var simulator = Simulator();
-  var assembler = Assembler();
-  var speed = document.getElementById("speed");
+  let $node = $(node);
+  let ui = UI();
+  let display = Display();
+  let screen = Screen();
+  let memory = Memory();
+  let labels = Labels();
+  let simulator = Simulator();
+  let assembler = Assembler();
+  let speed = document.querySelector("#speed");
 
   function initialize() {
     stripText();
@@ -31,62 +31,52 @@ function SimulatorWidget(node) {
     screen.initialize();
     simulator.reset();
 
-    $node.find('.assembleButton').click(function() {
-      assembler.assembleCode();
-    });
-    $node.find('.runButton').click(simulator.runBinary);
-    $node.find('.runButton').click(simulator.stopDebugger);
-    $node.find('.resetButton').click(simulator.reset);
-    $node.find('.hexdumpButton').click(assembler.hexdump);
-    $node.find('.disassembleButton').click(assembler.disassemble);
-    $node.find('.downloadButton').click(assembler.download);
-    $node.find('.uploadButton').click(assembler.upload);
-    $node.find('.debug').change(function() {
-      var debug = $(this).is(':checked');
-      if (debug) {
-        ui.debugOn();
-        simulator.enableDebugger();
-      } else {
-        ui.debugOff();
-        simulator.stopDebugger();
-      }
-    });
-    $node.find('.monitoring').change(function() {
+    node.querySelector('.assembleButton').addEventListener("click", assembler.assembleCode);
+    node.querySelector('.runButton').addEventListener("click", simulator.runBinary);
+    node.querySelector('.runButton').addEventListener("click", simulator.stopDebugger);
+    node.querySelector('.resetButton').addEventListener("click", simulator.reset);
+    node.querySelector('.hexdumpButton').addEventListener("click", assembler.hexdump);
+    node.querySelector('.disassembleButton').addEventListener("click", assembler.disassemble);
+    node.querySelector('.downloadButton').addEventListener("click", assembler.download);
+    node.querySelector('.uploadButton').addEventListener("click", assembler.upload);
+    node.querySelector('.start, .length').addEventListener("blur", simulator.handleMonitorRangeChange);
+    node.querySelector('.stepButton').addEventListener("click", simulator.debugExec);
+    node.querySelector('.gotoButton').addEventListener("click", simulator.gotoAddr);
+    node.querySelector('.notesButton').addEventListener("click", ui.showNotes);
+    node.querySelector('.debug').addEventListener("change", ()=>{setDebugMode(node.querySelector(".debug").checked)});
+    node.querySelector('.monitoring').addEventListener("change", ()=>{
       ui.toggleMonitor();
       simulator.toggleMonitor();
     });
-    $node.find('.console').change(function() {
+    node.querySelector('.console').addEventListener("change", ()=>{
       ui.toggleConsole();
       simulator.toggleConsole();
     });
-    $node.find('.start, .length').blur(simulator.handleMonitorRangeChange);
-    $node.find('.stepButton').click(simulator.debugExec);
-    $node.find('.gotoButton').click(simulator.gotoAddr);
-    $node.find('.notesButton').click(ui.showNotes);
 
-    var editor = $node.find('.code');
+    let editor = node.querySelector('.code');
+    editor.addEventListener('keydown', () => { simulator.stop(); ui.initialize() });
+    editor.addEventListener('input', () => { simulator.stop(); ui.initialize() });
 
-    editor.on('keypress input', simulator.stop);
-    editor.on('keypress input', ui.initialize);
-/*    editor.keydown(ui.captureTabInEditor); */
-
-    document.addEventListener('keydown',memory.storeKeydown);
-    /* $(document).keypress(memory.storeKeypress); */
-
+    document.addEventListener('keydown', memory.storeKeydown);
     simulator.handleMonitorRangeChange();
+  }
+
+  function setDebugMode(state){
+    ui.setDebug(state);
+    simulator.setDebugger(state);
   }
 
   function stripText() {
     //Remove leading and trailing space in textarea
-    var text = $node.find('.code').val();
+    let text = $node.find('.code').val();
     text = text.replace(/^\n+/, '').replace(/\s+$/, '');
     $node.find('.code').val(text);
   }
 
   function UI() {
-    var currentState;
+    let currentState;
 
-    var start = {
+    let start = {
       assemble: true,
       run: [false, 'Run'],
       reset: false,
@@ -94,7 +84,7 @@ function SimulatorWidget(node) {
       disassemble: false,
       debug: [false, false]
     };
-    var assembled = {
+    let assembled = {
       assemble: false,
       run: [true, 'Run'],
       reset: true,
@@ -102,7 +92,7 @@ function SimulatorWidget(node) {
       disassemble: true,
       debug: [true, false]
     };
-    var running = {
+    let running = {
       assemble: false,
       run: [true, 'Stop'],
       reset: true,
@@ -110,14 +100,14 @@ function SimulatorWidget(node) {
       disassemble: false,
       debug: [true, false]
     };
-    var debugging = {
+    let debugging = {
       assemble: false,
       reset: true,
       hexdump: true,
       disassemble: true,
       debug: [true, true]
     };
-    var postDebugging = {
+    let postDebugging = {
       assemble: false,
       reset: true,
       hexdump: true,
@@ -171,7 +161,7 @@ function SimulatorWidget(node) {
     }
 
     function toggleConsole() {
-      var c = document.getElementById('textscreenarea');
+      let c = document.getElementById('textscreenarea');
       if (c.style.display === "none") {
         c.style.display = "block";
       } else {
@@ -191,7 +181,7 @@ function SimulatorWidget(node) {
         e.preventDefault();
 
         // Insert tab at caret position (instead of losing focus)
-        var caretStart = this.selectionStart,
+        let caretStart = this.selectionStart,
           caretEnd = this.selectionEnd,
           currentValue = this.value;
 
@@ -209,6 +199,7 @@ function SimulatorWidget(node) {
       assembleSuccess: assembleSuccess,
       debugOn: debugOn,
       debugOff: debugOff,
+      setDebug: (state)=>{ state ? debugOn() : debugOff() },
       toggleMonitor: toggleMonitor,
       toggleConsole: toggleConsole,
       showNotes: showNotes,
@@ -218,22 +209,22 @@ function SimulatorWidget(node) {
 
 
   function Display() {
-    var displayArray = [];
-    var palette = [
+    let displayArray = [];
+    let palette = [
       "#000000", "#ffffff", "#880000", "#aaffee",
       "#cc44cc", "#00cc55", "#0000aa", "#eeee77",
       "#dd8855", "#664400", "#ff7777", "#333333",
       "#777777", "#aaff66", "#0088ff", "#bbbbbb"
     ];
-    var ctx;
-    var width;
-    var height;
-    var pixelSize;
-    var numX = 32;
-    var numY = 32;
+    let ctx;
+    let width;
+    let height;
+    let pixelSize;
+    let numX = 32;
+    let numY = 32;
 
     function initialize() {
-      var canvas = $node.find('.screen')[0];
+      let canvas = $node.find('.screen')[0];
       width = canvas.width;
       height = canvas.height;
       pixelSize = width / numX;
@@ -248,8 +239,8 @@ function SimulatorWidget(node) {
 
     function updatePixel(addr) {
       ctx.fillStyle = palette[memory.get(addr) & 0x0f];
-      var y = Math.floor((addr - 0x200) / 32);
-      var x = (addr - 0x200) % 32;
+      let y = Math.floor((addr - 0x200) / 32);
+      let x = (addr - 0x200) % 32;
       ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
     }
 
@@ -261,13 +252,13 @@ function SimulatorWidget(node) {
   }
 
   function Screen() {
-    var numX = 80;
-    var numY = 25;
-    var screentable = document.getElementById("textscreen");
+    let numX = 80;
+    let numY = 25;
+    let screentable = document.getElementById("textscreen");
 
     function initialize() {
-      for (var x = 0; x < numX; x++) {
-        for (var y = 0; y < numY; y++) {
+      for (let x = 0; x < numX; x++) {
+        for (let y = 0; y < numY; y++) {
           screentable.rows[y].cells[x].style.color = "#000000";
           screentable.rows[y].cells[x].style.background = "#ffffff";
           screentable.rows[y].cells[x].innerHTML = "&nbsp;";
@@ -280,13 +271,13 @@ function SimulatorWidget(node) {
     }
 
     function updateChar(addr) {
-      var y = Math.floor((addr - 0xf000) / numX);
-      var x = (addr - 0xf000) % numX;
-      var c = memory.get(addr);
+      let y = Math.floor((addr - 0xf000) / numX);
+      let x = (addr - 0xf000) % numX;
+      let c = memory.get(addr);
       if ((c & 0x7f) < 33 || (c & 0x7f) > 126) {
-        var s = "&nbsp;"; // unprintable is blank
+        let s = "&nbsp;"; // unprintable is blank
       } else {
-        var s = String.fromCharCode(c & 0x7f);
+        let s = String.fromCharCode(c & 0x7f);
       }
       if (c & 0x80) {
         screentable.rows[y].cells[x].style.color = "#ffffff";
@@ -306,7 +297,7 @@ function SimulatorWidget(node) {
   }
 
   function Memory() {
-    var memArray = new Array(0xfe00);
+    let memArray = new Array(0xfe00);
     memArray.push(0x48,0x8a,0x48,0x98,0x48,0xa4,0xf6,0xb9,0x1c,0xfe,0x18,0x65,0xf5,0x85,0xf7,0xb9,0x35,0xfe,0x69,0x00,0x85,0xf8,0x68,0xa8,0x68,0xaa,0x68,0x60,0x00,0x50,0xa0,0xf0,0x40,0x90,0xe0,0x30,0x80,0xd0,0x20,0x70,0xc0,0x10,0x60,0xb0,0x00,0x50,0xa0,0xf0,0x40,0x90,0xe0,0x30,0x80,0xf0,0xf0,0xf0,0xf0,0xf1,0xf1,0xf1,0xf2,0xf2,0xf2,0xf3,0xf3,0xf3,0xf4,0xf4,0xf4,0xf5,0xf5,0xf5,0xf5,0xf6,0xf6,0xf6,0xf7,0xf7,0xc9,0x08,0xf0,0x27,0xc9,0x0a,0xf0,0x3d,0xc9,0x0d,0xf0,0x39,0xc9,0x80,0xf0,0x7c,0xc9,0x81,0xf0,0x3b,0xc9,0x82,0xf0,0x64,0xc9,0x83,0xf0,0x45,0x20,0x00,0xfe,0x84,0xfd,0xa0,0x00,0x91,0xf7,0x20,0x9d,0xfe,0xa4,0xfd,0x60,0x48,0x98,0x48,0x8a,0x48,0x20,0xaf,0xfe,0x20,0x00,0xfe,0xa0,0x00,0xa9,0x20,0x91,0xf7,0xa6,0x50,0xca,0x68,0xaa,0x68,0xa8,0x68,0x60,0x48,0xa9,0x00,0x85,0xf5,0x20,0xca,0xfe,0x68,0x60,0x48,0xe6,0xf5,0xa9,0x50,0xc5,0xf5,0xd0,0x07,0xa9,0x00,0x85,0xf5,0x20,0xca,0xfe,0x68,0x60,0x48,0xc6,0xf5,0x10,0x14,0xa5,0xf6,0xf0,0x0a,0xa9,0x50,0x85,0xf5,0x20,0xda,0xfe,0x18,0x90,0x06,0xa9,0x00,0x85,0xf5,0x85,0xf6,0x68,0x60,0x48,0xe6,0xf6,0xa9,0x19,0xc5,0xf6,0xd0,0x05,0x20,0x2f,0xff,0xc6,0xf6,0x68,0x60,0xc6,0xf6,0x10,0x02,0xe6,0xf6,0x60,0x48,0x98,0x48,0xa9,0x00,0x85,0xf5,0x85,0xf6,0x20,0x00,0xfe,0xa0,0x00,0xa9,0x20,0x91,0xf7,0xc8,0xd0,0xfb,0xe6,0xf8,0xa5,0xf8,0xc9,0xf8,0xd0,0xf1,0x20,0x00,0xfe,0x68,0x98,0x68,0x60,0xa5,0xff,0xf0,0x06,0x48,0xa9,0x00,0x85,0xff,0x68,0x60,0xa0,0x19,0xa2,0x50,0x60,0xb0,0x0c,0x86,0xf5,0x84,0xf6,0x20,0x00,0xfe,0xa4,0xf8,0xa5,0xf7,0x60,0x20,0x00,0xfe,0xa0,0x00,0xb1,0xf7,0xa6,0xf5,0xa4,0xf6,0x60,0x48,0x98,0x48,0xa9,0x00,0x85,0xfb,0xa9,0x50,0x85,0xf9,0xa9,0xf0,0x85,0xfa,0x85,0xfc,0xa0,0x00,0xb1,0xf9,0x91,0xfb,0xc8,0xd0,0xf9,0xe6,0xfa,0xe6,0xfc,0xa9,0xf7,0xc5,0xfa,0xd0,0xef,0xb1,0xf9,0x91,0xfb,0xc8,0xc0,0x80,0xd0,0xf7,0xa0,0x00,0xa9,0x20,0x99,0x80,0xf7,0xc8,0xc0,0x50,0xd0,0xf8,0x68,0xa8,0x68,0x60,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x4c,0xe1,0xfe,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x4c,0x05,0xff,0x4c,0x4e,0xfe,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x4c,0x10,0xff,0x4c,0x15,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00);
 
     function set(addr, val) {
@@ -342,8 +333,8 @@ function SimulatorWidget(node) {
 
     // Store keycode in ZP $ff
     function storeKeydown(e) {
-      var value = e.key;
-      var code = 0;
+      let value = e.key;
+      let code = 0;
       if (value.length == 1) {
         code = value.charCodeAt(0);
       } else if (value == "ArrowUp") {
@@ -367,10 +358,10 @@ function SimulatorWidget(node) {
     }
 
     function format(start, length) {
-      var html = '';
-      var n;
+      let html = '';
+      let n;
 
-      for (var x = 0; x < length; x++) {
+      for (let x = 0; x < length; x++) {
         if ((x & 15) === 0) {
           if (x > 0) {
             html += "\n";
@@ -397,16 +388,16 @@ function SimulatorWidget(node) {
   }
 
   function Simulator() {
-    var regA = 0;
-    var regX = 0;
-    var regY = 0;
-    var regP = 0;
-    var regPC = 0x600;
-    var regSP = 0xff;
-    var codeRunning = false;
-    var debug = false;
-    var monitoring = false;
-    var showConsole = false;
+    let regA = 0;
+    let regX = 0;
+    let regY = 0;
+    let regP = 0;
+    let regPC = 0x600;
+    let regSP = 0xff;
+    let codeRunning = false;
+    let debug = false;
+    let monitoring = false;
+    let showConsole = false;
 
     // Set zero and negative processor flags based on result
     function setNVflags(value) {
@@ -442,16 +433,16 @@ function SimulatorWidget(node) {
       setNVflags(regY);
     }
 
-    var ORA = setNVflagsForRegA;
-    var AND = setNVflagsForRegA;
-    var EOR = setNVflagsForRegA;
-    var ASL = setNVflags;
-    var LSR = setNVflags;
-    var ROL = setNVflags;
-    var ROR = setNVflags;
-    var LDA = setNVflagsForRegA;
-    var LDX = setNVflagsForRegX;
-    var LDY = setNVflagsForRegY;
+    let ORA = setNVflagsForRegA;
+    let AND = setNVflagsForRegA;
+    let EOR = setNVflagsForRegA;
+    let ASL = setNVflags;
+    let LSR = setNVflags;
+    let ROL = setNVflags;
+    let ROR = setNVflags;
+    let LDA = setNVflagsForRegA;
+    let LDX = setNVflagsForRegX;
+    let LDY = setNVflagsForRegY;
 
     function BIT(value) {
       if (value & 0x80) {
@@ -489,7 +480,7 @@ function SimulatorWidget(node) {
     }
 
     function DEC(addr) {
-      var value = memory.get(addr);
+      let value = memory.get(addr);
       value--;
       value &= 0xff;
       memory.storeByte(addr, value);
@@ -497,7 +488,7 @@ function SimulatorWidget(node) {
     }
 
     function INC(addr) {
-      var value = memory.get(addr);
+      let value = memory.get(addr);
       value++;
       value &= 0xff;
       memory.storeByte(addr, value);
@@ -543,7 +534,7 @@ function SimulatorWidget(node) {
     }
 
     function testSBC(value) {
-      var tmp, w;
+      let tmp, w;
       if ((regA ^ value) & 0x80) {
         setOverflow();
       } else {
@@ -592,7 +583,7 @@ function SimulatorWidget(node) {
     }
 
     function testADC(value) {
-      var tmp;
+      let tmp;
       if ((regA ^ value) & 0x80) {
         CLV();
       } else {
@@ -635,29 +626,29 @@ function SimulatorWidget(node) {
       setNVflagsForRegA();
     }
 
-    var instructions = {
+    let instructions = {
       i00: function() {
         codeRunning = false;
         //BRK
       },
 
       i01: function() {
-        var zp = (popByte() + regX) & 0xff;
-        var addr = memory.getWord(zp);
-        var value = memory.get(addr);
+        let zp = (popByte() + regX) & 0xff;
+        let addr = memory.getWord(zp);
+        let value = memory.get(addr);
         regA |= value;
         ORA();
       },
 
       i05: function() {
-        var zp = popByte();
+        let zp = popByte();
         regA |= memory.get(zp);
         ORA();
       },
 
       i06: function() {
-        var zp = popByte();
-        var value = memory.get(zp);
+        let zp = popByte();
+        let value = memory.get(zp);
         setCarryFlagFromBit7(value);
         value = (value << 1) & 0xff;
         memory.storeByte(zp, value);
@@ -686,8 +677,8 @@ function SimulatorWidget(node) {
       },
 
       i0e: function() {
-        var addr = popWord();
-        var value = memory.get(addr);
+        let addr = popWord();
+        let value = memory.get(addr);
         setCarryFlagFromBit7(value);
         value = (value << 1) & 0xff;
         memory.storeByte(addr, value);
@@ -695,7 +686,7 @@ function SimulatorWidget(node) {
       },
 
       i10: function() {
-        var offset = popByte();
+        let offset = popByte();
         if (!negativeSet()) {
           jumpBranch(offset);
         }
@@ -703,21 +694,21 @@ function SimulatorWidget(node) {
       },
 
       i11: function() {
-        var zp = popByte();
-        var value = memory.getWord(zp) + regY;
+        let zp = popByte();
+        let value = memory.getWord(zp) + regY;
         regA |= memory.get(value);
         ORA();
       },
 
       i15: function() {
-        var addr = (popByte() + regX) & 0xff;
+        let addr = (popByte() + regX) & 0xff;
         regA |= memory.get(addr);
         ORA();
       },
 
       i16: function() {
-        var addr = (popByte() + regX) & 0xff;
-        var value = memory.get(addr);
+        let addr = (popByte() + regX) & 0xff;
+        let value = memory.get(addr);
         setCarryFlagFromBit7(value);
         value = (value << 1) & 0xff;
         memory.storeByte(addr, value);
@@ -729,20 +720,20 @@ function SimulatorWidget(node) {
       },
 
       i19: function() {
-        var addr = popWord() + regY;
+        let addr = popWord() + regY;
         regA |= memory.get(addr);
         ORA();
       },
 
       i1d: function() {
-        var addr = popWord() + regX;
+        let addr = popWord() + regX;
         regA |= memory.get(addr);
         ORA();
       },
 
       i1e: function() {
-        var addr = popWord() + regX;
-        var value = memory.get(addr);
+        let addr = popWord() + regX;
+        let value = memory.get(addr);
         setCarryFlagFromBit7(value);
         value = (value << 1) & 0xff;
         memory.storeByte(addr, value);
@@ -750,8 +741,8 @@ function SimulatorWidget(node) {
       },
 
       i20: function() {
-        var addr = popWord();
-        var currAddr = regPC - 1;
+        let addr = popWord();
+        let currAddr = regPC - 1;
         stackPush(((currAddr >> 8) & 0xff));
         stackPush((currAddr & 0xff));
         regPC = addr;
@@ -759,29 +750,29 @@ function SimulatorWidget(node) {
       },
 
       i21: function() {
-        var zp = (popByte() + regX) & 0xff;
-        var addr = memory.getWord(zp);
-        var value = memory.get(addr);
+        let zp = (popByte() + regX) & 0xff;
+        let addr = memory.getWord(zp);
+        let value = memory.get(addr);
         regA &= value;
         AND();
       },
 
       i24: function() {
-        var zp = popByte();
-        var value = memory.get(zp);
+        let zp = popByte();
+        let value = memory.get(zp);
         BIT(value);
       },
 
       i25: function() {
-        var zp = popByte();
+        let zp = popByte();
         regA &= memory.get(zp);
         AND();
       },
 
       i26: function() {
-        var sf = carrySet();
-        var addr = popByte();
-        var value = memory.get(addr);
+        let sf = carrySet();
+        let addr = popByte();
+        let value = memory.get(addr);
         setCarryFlagFromBit7(value);
         value = (value << 1) & 0xff;
         value |= sf;
@@ -800,7 +791,7 @@ function SimulatorWidget(node) {
       },
 
       i2a: function() {
-        var sf = carrySet();
+        let sf = carrySet();
         setCarryFlagFromBit7(regA);
         regA = (regA << 1) & 0xff;
         regA |= sf;
@@ -808,20 +799,20 @@ function SimulatorWidget(node) {
       },
 
       i2c: function() {
-        var value = memory.get(popWord());
+        let value = memory.get(popWord());
         BIT(value);
       },
 
       i2d: function() {
-        var value = memory.get(popWord());
+        let value = memory.get(popWord());
         regA &= value;
         AND();
       },
 
       i2e: function() {
-        var sf = carrySet();
-        var addr = popWord();
-        var value = memory.get(addr);
+        let sf = carrySet();
+        let addr = popWord();
+        let value = memory.get(addr);
         setCarryFlagFromBit7(value);
         value = (value << 1) & 0xff;
         value |= sf;
@@ -830,7 +821,7 @@ function SimulatorWidget(node) {
       },
 
       i30: function() {
-        var offset = popByte();
+        let offset = popByte();
         if (negativeSet()) {
           jumpBranch(offset);
         }
@@ -838,22 +829,22 @@ function SimulatorWidget(node) {
       },
 
       i31: function() {
-        var zp = popByte();
-        var value = memory.getWord(zp) + regY;
+        let zp = popByte();
+        let value = memory.getWord(zp) + regY;
         regA &= memory.get(value);
         AND();
       },
 
       i35: function() {
-        var addr = (popByte() + regX) & 0xff;
+        let addr = (popByte() + regX) & 0xff;
         regA &= memory.get(addr);
         AND();
       },
 
       i36: function() {
-        var sf = carrySet();
-        var addr = (popByte() + regX) & 0xff;
-        var value = memory.get(addr);
+        let sf = carrySet();
+        let addr = (popByte() + regX) & 0xff;
+        let value = memory.get(addr);
         setCarryFlagFromBit7(value);
         value = (value << 1) & 0xff;
         value |= sf;
@@ -866,23 +857,23 @@ function SimulatorWidget(node) {
       },
 
       i39: function() {
-        var addr = popWord() + regY;
-        var value = memory.get(addr);
+        let addr = popWord() + regY;
+        let value = memory.get(addr);
         regA &= value;
         AND();
       },
 
       i3d: function() {
-        var addr = popWord() + regX;
-        var value = memory.get(addr);
+        let addr = popWord() + regX;
+        let value = memory.get(addr);
         regA &= value;
         AND();
       },
 
       i3e: function() {
-        var sf = carrySet();
-        var addr = popWord() + regX;
-        var value = memory.get(addr);
+        let sf = carrySet();
+        let addr = popWord() + regX;
+        let value = memory.get(addr);
         setCarryFlagFromBit7(value);
         value = (value << 1) & 0xff;
         value |= sf;
@@ -897,22 +888,22 @@ function SimulatorWidget(node) {
       },
 
       i41: function() {
-        var zp = (popByte() + regX) & 0xff;
-        var value = memory.getWord(zp);
+        let zp = (popByte() + regX) & 0xff;
+        let value = memory.getWord(zp);
         regA ^= memory.get(value);
         EOR();
       },
 
       i45: function() {
-        var addr = popByte() & 0xff;
-        var value = memory.get(addr);
+        let addr = popByte() & 0xff;
+        let value = memory.get(addr);
         regA ^= value;
         EOR();
       },
 
       i46: function() {
-        var addr = popByte() & 0xff;
-        var value = memory.get(addr);
+        let addr = popByte() & 0xff;
+        let value = memory.get(addr);
         setCarryFlagFromBit0(value);
         value = value >> 1;
         memory.storeByte(addr, value);
@@ -941,15 +932,15 @@ function SimulatorWidget(node) {
       },
 
       i4d: function() {
-        var addr = popWord();
-        var value = memory.get(addr);
+        let addr = popWord();
+        let value = memory.get(addr);
         regA ^= value;
         EOR();
       },
 
       i4e: function() {
-        var addr = popWord();
-        var value = memory.get(addr);
+        let addr = popWord();
+        let value = memory.get(addr);
         setCarryFlagFromBit0(value);
         value = value >> 1;
         memory.storeByte(addr, value);
@@ -957,7 +948,7 @@ function SimulatorWidget(node) {
       },
 
       i50: function() {
-        var offset = popByte();
+        let offset = popByte();
         if (!overflowSet()) {
           jumpBranch(offset);
         }
@@ -965,21 +956,21 @@ function SimulatorWidget(node) {
       },
 
       i51: function() {
-        var zp = popByte();
-        var value = memory.getWord(zp) + regY;
+        let zp = popByte();
+        let value = memory.getWord(zp) + regY;
         regA ^= memory.get(value);
         EOR();
       },
 
       i55: function() {
-        var addr = (popByte() + regX) & 0xff;
+        let addr = (popByte() + regX) & 0xff;
         regA ^= memory.get(addr);
         EOR();
       },
 
       i56: function() {
-        var addr = (popByte() + regX) & 0xff;
-        var value = memory.get(addr);
+        let addr = (popByte() + regX) & 0xff;
+        let value = memory.get(addr);
         setCarryFlagFromBit0(value);
         value = value >> 1;
         memory.storeByte(addr, value);
@@ -993,22 +984,22 @@ function SimulatorWidget(node) {
       },
 
       i59: function() {
-        var addr = popWord() + regY;
-        var value = memory.get(addr);
+        let addr = popWord() + regY;
+        let value = memory.get(addr);
         regA ^= value;
         EOR();
       },
 
       i5d: function() {
-        var addr = popWord() + regX;
-        var value = memory.get(addr);
+        let addr = popWord() + regX;
+        let value = memory.get(addr);
         regA ^= value;
         EOR();
       },
 
       i5e: function() {
-        var addr = popWord() + regX;
-        var value = memory.get(addr);
+        let addr = popWord() + regX;
+        let value = memory.get(addr);
         setCarryFlagFromBit0(value);
         value = value >> 1;
         memory.storeByte(addr, value);
@@ -1021,24 +1012,24 @@ function SimulatorWidget(node) {
       },
 
       i61: function() {
-        var zp = (popByte() + regX) & 0xff;
-        var addr = memory.getWord(zp);
-        var value = memory.get(addr);
+        let zp = (popByte() + regX) & 0xff;
+        let addr = memory.getWord(zp);
+        let value = memory.get(addr);
         testADC(value);
         //ADC
       },
 
       i65: function() {
-        var addr = popByte();
-        var value = memory.get(addr);
+        let addr = popByte();
+        let value = memory.get(addr);
         testADC(value);
         //ADC
       },
 
       i66: function() {
-        var sf = carrySet();
-        var addr = popByte();
-        var value = memory.get(addr);
+        let sf = carrySet();
+        let addr = popByte();
+        let value = memory.get(addr);
         setCarryFlagFromBit0(value);
         value = value >> 1;
         if (sf) {
@@ -1055,13 +1046,13 @@ function SimulatorWidget(node) {
       },
 
       i69: function() {
-        var value = popByte();
+        let value = popByte();
         testADC(value);
         //ADC
       },
 
       i6a: function() {
-        var sf = carrySet();
+        let sf = carrySet();
         setCarryFlagFromBit0(regA);
         regA = regA >> 1;
         if (sf) {
@@ -1076,16 +1067,16 @@ function SimulatorWidget(node) {
       },
 
       i6d: function() {
-        var addr = popWord();
-        var value = memory.get(addr);
+        let addr = popWord();
+        let value = memory.get(addr);
         testADC(value);
         //ADC
       },
 
       i6e: function() {
-        var sf = carrySet();
-        var addr = popWord();
-        var value = memory.get(addr);
+        let sf = carrySet();
+        let addr = popWord();
+        let value = memory.get(addr);
         setCarryFlagFromBit0(value);
         value = value >> 1;
         if (sf) {
@@ -1096,7 +1087,7 @@ function SimulatorWidget(node) {
       },
 
       i70: function() {
-        var offset = popByte();
+        let offset = popByte();
         if (overflowSet()) {
           jumpBranch(offset);
         }
@@ -1104,24 +1095,24 @@ function SimulatorWidget(node) {
       },
 
       i71: function() {
-        var zp = popByte();
-        var addr = memory.getWord(zp);
-        var value = memory.get(addr + regY);
+        let zp = popByte();
+        let addr = memory.getWord(zp);
+        let value = memory.get(addr + regY);
         testADC(value);
         //ADC
       },
 
       i75: function() {
-        var addr = (popByte() + regX) & 0xff;
-        var value = memory.get(addr);
+        let addr = (popByte() + regX) & 0xff;
+        let value = memory.get(addr);
         testADC(value);
         //ADC
       },
 
       i76: function() {
-        var sf = carrySet();
-        var addr = (popByte() + regX) & 0xff;
-        var value = memory.get(addr);
+        let sf = carrySet();
+        let addr = (popByte() + regX) & 0xff;
+        let value = memory.get(addr);
         setCarryFlagFromBit0(value);
         value = value >> 1;
         if (sf) {
@@ -1138,23 +1129,23 @@ function SimulatorWidget(node) {
       },
 
       i79: function() {
-        var addr = popWord();
-        var value = memory.get(addr + regY);
+        let addr = popWord();
+        let value = memory.get(addr + regY);
         testADC(value);
         //ADC
       },
 
       i7d: function() {
-        var addr = popWord();
-        var value = memory.get(addr + regX);
+        let addr = popWord();
+        let value = memory.get(addr + regX);
         testADC(value);
         //ADC
       },
 
       i7e: function() {
-        var sf = carrySet();
-        var addr = popWord() + regX;
-        var value = memory.get(addr);
+        let sf = carrySet();
+        let addr = popWord() + regX;
+        let value = memory.get(addr);
         setCarryFlagFromBit0(value);
         value = value >> 1;
         if (sf) {
@@ -1165,8 +1156,8 @@ function SimulatorWidget(node) {
       },
 
       i81: function() {
-        var zp = (popByte() + regX) & 0xff;
-        var addr = memory.getWord(zp);
+        let zp = (popByte() + regX) & 0xff;
+        let addr = memory.getWord(zp);
         memory.storeByte(addr, regA);
         //STA
       },
@@ -1214,7 +1205,7 @@ function SimulatorWidget(node) {
       },
 
       i90: function() {
-        var offset = popByte();
+        let offset = popByte();
         if (!carrySet()) {
           jumpBranch(offset);
         }
@@ -1222,8 +1213,8 @@ function SimulatorWidget(node) {
       },
 
       i91: function() {
-        var zp = popByte();
-        var addr = memory.getWord(zp) + regY;
+        let zp = popByte();
+        let addr = memory.getWord(zp) + regY;
         memory.storeByte(addr, regA);
         //STA
       },
@@ -1260,7 +1251,7 @@ function SimulatorWidget(node) {
       },
 
       i9d: function() {
-        var addr = popWord();
+        let addr = popWord();
         memory.storeByte(addr + regX, regA);
         //STA
       },
@@ -1271,8 +1262,8 @@ function SimulatorWidget(node) {
       },
 
       ia1: function() {
-        var zp = (popByte() + regX) & 0xff;
-        var addr = memory.getWord(zp);
+        let zp = (popByte() + regX) & 0xff;
+        let addr = memory.getWord(zp);
         regA = memory.get(addr);
         LDA();
       },
@@ -1330,7 +1321,7 @@ function SimulatorWidget(node) {
       },
 
       ib0: function() {
-        var offset = popByte();
+        let offset = popByte();
         if (carrySet()) {
           jumpBranch(offset);
         }
@@ -1338,8 +1329,8 @@ function SimulatorWidget(node) {
       },
 
       ib1: function() {
-        var zp = popByte();
-        var addr = memory.getWord(zp) + regY;
+        let zp = popByte();
+        let addr = memory.getWord(zp) + regY;
         regA = memory.get(addr);
         LDA();
       },
@@ -1364,7 +1355,7 @@ function SimulatorWidget(node) {
       },
 
       ib9: function() {
-        var addr = popWord() + regY;
+        let addr = popWord() + regY;
         regA = memory.get(addr);
         LDA();
       },
@@ -1376,51 +1367,51 @@ function SimulatorWidget(node) {
       },
 
       ibc: function() {
-        var addr = popWord() + regX;
+        let addr = popWord() + regX;
         regY = memory.get(addr);
         LDY();
       },
 
       ibd: function() {
-        var addr = popWord() + regX;
+        let addr = popWord() + regX;
         regA = memory.get(addr);
         LDA();
       },
 
       ibe: function() {
-        var addr = popWord() + regY;
+        let addr = popWord() + regY;
         regX = memory.get(addr);
         LDX();
       },
 
       ic0: function() {
-        var value = popByte();
+        let value = popByte();
         doCompare(regY, value);
         //CPY
       },
 
       ic1: function() {
-        var zp = (popByte() + regX) & 0xff;
-        var addr = memory.getWord(zp);
-        var value = memory.get(addr);
+        let zp = (popByte() + regX) & 0xff;
+        let addr = memory.getWord(zp);
+        let value = memory.get(addr);
         doCompare(regA, value);
         //CPA
       },
 
       ic4: function() {
-        var value = memory.get(popByte());
+        let value = memory.get(popByte());
         doCompare(regY, value);
         //CPY
       },
 
       ic5: function() {
-        var value = memory.get(popByte());
+        let value = memory.get(popByte());
         doCompare(regA, value);
         //CPA
       },
 
       ic6: function() {
-        var zp = popByte();
+        let zp = popByte();
         DEC(zp);
       },
 
@@ -1431,7 +1422,7 @@ function SimulatorWidget(node) {
       },
 
       ic9: function() {
-        var value = popByte();
+        let value = popByte();
         doCompare(regA, value);
         //CMP
       },
@@ -1443,24 +1434,24 @@ function SimulatorWidget(node) {
       },
 
       icc: function() {
-        var value = memory.get(popWord());
+        let value = memory.get(popWord());
         doCompare(regY, value);
         //CPY
       },
 
       icd: function() {
-        var value = memory.get(popWord());
+        let value = memory.get(popWord());
         doCompare(regA, value);
         //CPA
       },
 
       ice: function() {
-        var addr = popWord();
+        let addr = popWord();
         DEC(addr);
       },
 
       id0: function() {
-        var offset = popByte();
+        let offset = popByte();
         if (!zeroSet()) {
           jumpBranch(offset);
         }
@@ -1468,21 +1459,21 @@ function SimulatorWidget(node) {
       },
 
       id1: function() {
-        var zp = popByte();
-        var addr = memory.getWord(zp) + regY;
-        var value = memory.get(addr);
+        let zp = popByte();
+        let addr = memory.getWord(zp) + regY;
+        let value = memory.get(addr);
         doCompare(regA, value);
         //CMP
       },
 
       id5: function() {
-        var value = memory.get((popByte() + regX) & 0xff);
+        let value = memory.get((popByte() + regX) & 0xff);
         doCompare(regA, value);
         //CMP
       },
 
       id6: function() {
-        var addr = (popByte() + regX) & 0xff;
+        let addr = (popByte() + regX) & 0xff;
         DEC(addr);
       },
 
@@ -1492,53 +1483,53 @@ function SimulatorWidget(node) {
       },
 
       id9: function() {
-        var addr = popWord() + regY;
-        var value = memory.get(addr);
+        let addr = popWord() + regY;
+        let value = memory.get(addr);
         doCompare(regA, value);
         //CMP
       },
 
       idd: function() {
-        var addr = popWord() + regX;
-        var value = memory.get(addr);
+        let addr = popWord() + regX;
+        let value = memory.get(addr);
         doCompare(regA, value);
         //CMP
       },
 
       ide: function() {
-        var addr = popWord() + regX;
+        let addr = popWord() + regX;
         DEC(addr);
       },
 
       ie0: function() {
-        var value = popByte();
+        let value = popByte();
         doCompare(regX, value);
         //CPX
       },
 
       ie1: function() {
-        var zp = (popByte() + regX) & 0xff;
-        var addr = memory.getWord(zp);
-        var value = memory.get(addr);
+        let zp = (popByte() + regX) & 0xff;
+        let addr = memory.getWord(zp);
+        let value = memory.get(addr);
         testSBC(value);
         //SBC
       },
 
       ie4: function() {
-        var value = memory.get(popByte());
+        let value = memory.get(popByte());
         doCompare(regX, value);
         //CPX
       },
 
       ie5: function() {
-        var addr = popByte();
-        var value = memory.get(addr);
+        let addr = popByte();
+        let value = memory.get(addr);
         testSBC(value);
         //SBC
       },
 
       ie6: function() {
-        var zp = popByte();
+        let zp = popByte();
         INC(zp);
       },
 
@@ -1549,7 +1540,7 @@ function SimulatorWidget(node) {
       },
 
       ie9: function() {
-        var value = popByte();
+        let value = popByte();
         testSBC(value);
         //SBC
       },
@@ -1560,31 +1551,31 @@ function SimulatorWidget(node) {
 
       i42: function() {
         //WDM  -- pseudo op for emulator: arg 0 to output A to message box
-        var value = popByte();
+        let value = popByte();
         if (value == 0)
           message(String.fromCharCode(regA));
       },
 
       iec: function() {
-        var value = memory.get(popWord());
+        let value = memory.get(popWord());
         doCompare(regX, value);
         //CPX
       },
 
       ied: function() {
-        var addr = popWord();
-        var value = memory.get(addr);
+        let addr = popWord();
+        let value = memory.get(addr);
         testSBC(value);
         //SBC
       },
 
       iee: function() {
-        var addr = popWord();
+        let addr = popWord();
         INC(addr);
       },
 
       if0: function() {
-        var offset = popByte();
+        let offset = popByte();
         if (zeroSet()) {
           jumpBranch(offset);
         }
@@ -1592,22 +1583,22 @@ function SimulatorWidget(node) {
       },
 
       if1: function() {
-        var zp = popByte();
-        var addr = memory.getWord(zp);
-        var value = memory.get(addr + regY);
+        let zp = popByte();
+        let addr = memory.getWord(zp);
+        let value = memory.get(addr + regY);
         testSBC(value);
         //SBC
       },
 
       if5: function() {
-        var addr = (popByte() + regX) & 0xff;
-        var value = memory.get(addr);
+        let addr = (popByte() + regX) & 0xff;
+        let value = memory.get(addr);
         testSBC(value);
         //SBC
       },
 
       if6: function() {
-        var addr = (popByte() + regX) & 0xff;
+        let addr = (popByte() + regX) & 0xff;
         INC(addr);
       },
 
@@ -1617,21 +1608,21 @@ function SimulatorWidget(node) {
       },
 
       if9: function() {
-        var addr = popWord();
-        var value = memory.get(addr + regY);
+        let addr = popWord();
+        let value = memory.get(addr + regY);
         testSBC(value);
         //SBC
       },
 
       ifd: function() {
-        var addr = popWord();
-        var value = memory.get(addr + regX);
+        let addr = popWord();
+        let value = memory.get(addr + regX);
         testSBC(value);
         //SBC
       },
 
       ife: function() {
-        var addr = popWord() + regX;
+        let addr = popWord() + regX;
         INC(addr);
       },
 
@@ -1651,7 +1642,7 @@ function SimulatorWidget(node) {
     }
 
     function stackPop() {
-      var value;
+      let value;
       regSP++;
       if (regSP >= 0x100) {
         regSP &= 0xff;
@@ -1687,8 +1678,8 @@ function SimulatorWidget(node) {
     function multiExecute() {
       if (!debug) {
         // use a prime number of iterations to avoid aliasing effects
-	var s = speed.value;
-        for (var w = 0; w < s; w++) {
+	let s = speed.value;
+        for (let w = 0; w < s; w++) {
           execute();
         }
       }
@@ -1701,11 +1692,11 @@ function SimulatorWidget(node) {
 
 
     function executeNextInstruction() {
-      var instructionName = popByte().toString(16).toLowerCase();
+      let instructionName = popByte().toString(16).toLowerCase();
       if (instructionName.length === 1) {
         instructionName = '0' + instructionName;
       }
-      var instruction = instructions['i' + instructionName];
+      let instruction = instructions['i' + instructionName];
 
       if (instruction) {
         instruction();
@@ -1731,12 +1722,12 @@ function SimulatorWidget(node) {
 
     function updateMonitor() {
       if (monitoring) {
-        var start = parseInt($node.find('.start').val(), 16);
-        var length = parseInt($node.find('.length').val(), 16);
+        let start = parseInt($node.find('.start').val(), 16);
+        let length = parseInt($node.find('.length').val(), 16);
 
-        var end = start + length - 1;
+        let end = start + length - 1;
 
-        var monitorNode = $node.find('.monitor code');
+        let monitorNode = $node.find('.monitor code');
 
         if (!isNaN(start) && !isNaN(length) && start >= 0 && length > 0 && end <= 0xffff) {
           monitorNode.html("       0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n" + memory.format(start, length));
@@ -1748,7 +1739,7 @@ function SimulatorWidget(node) {
 
     function handleMonitorRangeChange() {
 
-      var $start = $node.find('.start'),
+      let $start = $node.find('.start'),
         $length = $node.find('.length'),
         start = parseInt($start.val(), 16),
         length = parseInt($length.val(), 16),
@@ -1777,11 +1768,11 @@ function SimulatorWidget(node) {
 
     function updateDebugInfo() {
 
-      var html = "A=$" + num2hex(regA) + " X=$" + num2hex(regX) + " Y=$" + num2hex(regY) + "<br />";
+      let html = "A=$" + num2hex(regA) + " X=$" + num2hex(regX) + " Y=$" + num2hex(regY) + "<br />";
       html += "SP=$" + num2hex(regSP) + " PC=$" + addr2hex(regPC);
       html += "<br />";
       html += "NV-BDIZC<br />";
-      for (var i = 7; i >= 0; i--) {
+      for (let i = 7; i >= 0; i--) {
         html += regP >> i & 1;
       }
       $node.find('.minidebugger').html(html);
@@ -1791,8 +1782,8 @@ function SimulatorWidget(node) {
 
     // gotoAddr() - Set PC to address (or address of label)
     function gotoAddr() {
-      var inp = prompt("Enter address or label", "");
-      var addr = 0;
+      let inp = prompt("Enter address or label", "");
+      let addr = 0;
       if (labels.find(inp)) {
         addr = labels.getPC(inp);
       } else {
@@ -1828,10 +1819,10 @@ function SimulatorWidget(node) {
     function reset() {
       display.reset();
       screen.reset();
-      for (var i = 0; i < 0x600; i++) { // clear ZP, stack and screen
+      for (let i = 0; i < 0x600; i++) { // clear ZP, stack and screen
         memory.set(i, 0x00);
       }
-      for (var i = 0xf000; i < 0xf000 + 80*25; i++) { // clear text screen
+      for (let i = 0xf000; i < 0xf000 + 80*25; i++) { // clear text screen
         memory.set(i, 0x00);
       }
       regA = regX = regY = 0;
@@ -1858,6 +1849,7 @@ function SimulatorWidget(node) {
       runBinary: runBinary,
       enableDebugger: enableDebugger,
       stopDebugger: stopDebugger,
+      setDebugger: (state)=>{ state ? enableDebugger() : stopDebugger() },
       debugExec: debugExec,
       gotoAddr: gotoAddr,
       reset: reset,
@@ -1870,10 +1862,10 @@ function SimulatorWidget(node) {
 
 
   function Labels() {
-    var labelIndex = [];
+    let labelIndex = [];
 
     function indexLines(lines, symbols) {
-      for (var i = 0; i < lines.length; i++) {
+      for (let i = 0; i < lines.length; i++) {
         if (!indexLine(lines[i], symbols)) {
           message("**Label already defined at line " + (i + 1) + ":** " + lines[i]);
           return false;
@@ -1887,12 +1879,12 @@ function SimulatorWidget(node) {
     function indexLine(input, symbols) {
 
       // Figure out how many bytes this instruction takes
-      var currentPC = assembler.getCurrentPC();
+      let currentPC = assembler.getCurrentPC();
       assembler.assembleLine(input, 0, symbols); //TODO: find a better way for Labels to have access to assembler
 
       // Find command or label
       if (input.match(/^\w+:/)) {
-        var label = input.replace(/(^\w+):.*$/, "$1");
+        let label = input.replace(/(^\w+):.*$/, "$1");
 
         if (symbols.lookup(label)) {
           message("**Label " + label + "is already used as a symbol; please rename one of them**");
@@ -1915,8 +1907,8 @@ function SimulatorWidget(node) {
 
     // Returns true if label exists.
     function find(name) {
-      var nameAndAddr;
-      for (var i = 0; i < labelIndex.length; i++) {
+      let nameAndAddr;
+      for (let i = 0; i < labelIndex.length; i++) {
         nameAndAddr = labelIndex[i].split("|");
         if (name === nameAndAddr[0]) {
           return true;
@@ -1927,8 +1919,8 @@ function SimulatorWidget(node) {
 
     // Associates label with address
     function setPC(name, addr) {
-      var nameAndAddr;
-      for (var i = 0; i < labelIndex.length; i++) {
+      let nameAndAddr;
+      for (let i = 0; i < labelIndex.length; i++) {
         nameAndAddr = labelIndex[i].split("|");
         if (name === nameAndAddr[0]) {
           labelIndex[i] = name + "|" + addr;
@@ -1940,8 +1932,8 @@ function SimulatorWidget(node) {
 
     // Get address associated with label
     function getPC(name) {
-      var nameAndAddr;
-      for (var i = 0; i < labelIndex.length; i++) {
+      let nameAndAddr;
+      for (let i = 0; i < labelIndex.length; i++) {
         nameAndAddr = labelIndex[i].split("|");
         if (name === nameAndAddr[0]) {
           return (nameAndAddr[1]);
@@ -1951,7 +1943,7 @@ function SimulatorWidget(node) {
     }
 
     function displayMessage() {
-      var str = "Found " + labelIndex.length + " label";
+      let str = "Found " + labelIndex.length + " label";
       if (labelIndex.length !== 1) {
         str += "s";
       }
@@ -1973,12 +1965,12 @@ function SimulatorWidget(node) {
 
 
   function Assembler() {
-    var defaultCodePC;
-    var codeLen;
-    var codeAssembledOK = false;
-    var wasOutOfRangeBranch = false;
+    let defaultCodePC;
+    let codeLen;
+    let codeAssembledOK = false;
+    let wasOutOfRangeBranch = false;
 
-    var Opcodes = [
+    let Opcodes = [
       /* Name, Imm,  ZP,   ZPX,  ZPY,  ABS, ABSX, ABSY,  IND, INDX, INDY, SNGL, BRA */
       ["ADC", 0x69, 0x65, 0x75, null, 0x6d, 0x7d, 0x79, null, 0x61, 0x71, null, null],
       ["AND", 0x29, 0x25, 0x35, null, 0x2d, 0x3d, 0x39, null, 0x21, 0x31, null, null],
@@ -2042,7 +2034,7 @@ function SimulatorWidget(node) {
 
     // Assembles the code into memory
     function assembleCode() {
-      var BOOTSTRAP_ADDRESS = 0x600;
+      let BOOTSTRAP_ADDRESS = 0x600;
 
       wasOutOfRangeBranch = false;
 
@@ -2051,13 +2043,13 @@ function SimulatorWidget(node) {
       defaultCodePC = BOOTSTRAP_ADDRESS;
       $node.find('.messages code').empty();
 
-      var code = $node.find('.code').val();
+      let code = $node.find('.code').val();
       code += "\n\n";
-      var lines = code.split("\n");
+      let lines = code.split("\n");
       codeAssembledOK = true;
 
       message("Preprocessing ...");
-      var symbols = preprocess(lines);
+      let symbols = preprocess(lines);
 
       message("Indexing labels ...");
       defaultCodePC = BOOTSTRAP_ADDRESS;
@@ -2070,7 +2062,7 @@ function SimulatorWidget(node) {
       message("Assembling code ...");
 
       codeLen = 0;
-      for (var i = 0; i < lines.length; i++) {
+      for (let i = 0; i < lines.length; i++) {
         if (!assembleLine(lines[i], i, symbols)) {
           codeAssembledOK = false;
           break;
@@ -2087,7 +2079,7 @@ function SimulatorWidget(node) {
         memory.set(defaultCodePC, 0x00); //set a null byte at the end of the code
       } else {
 
-        var str = lines[i].replace("<", "&lt;").replace(">", "&gt;");
+        let str = lines[i].replace("<", "&lt;").replace(">", "&gt;");
 
         if (!wasOutOfRangeBranch) {
           message("**Syntax error line " + (i + 1) + ": " + str + "**");
@@ -2106,15 +2098,15 @@ function SimulatorWidget(node) {
     // Sanitize input: remove comments and trim leading/trailing whitespace
     function sanitize(line) {
       // remove comments
-      var no_comments = line.replace(/^(.*?);.*/, "$1");
+      let no_comments = line.replace(/^(.*?);.*/, "$1");
 
       // trim line
       return no_comments.replace(/^\s+/, "").replace(/\s+$/, "");
     }
 
     function preprocess(lines) {
-      var table = [];
-      var PREFIX = "__"; // Using a prefix avoids clobbering any predefined properties
+      let table = [];
+      let PREFIX = "__"; // Using a prefix avoids clobbering any predefined properties
 
       function lookup(key) {
         if (table.hasOwnProperty(PREFIX + key)) return table[PREFIX + key];
@@ -2122,16 +2114,16 @@ function SimulatorWidget(node) {
       }
 
       function add(key, value) {
-        var valueAlreadyExists = table.hasOwnProperty(PREFIX + key)
+        let valueAlreadyExists = table.hasOwnProperty(PREFIX + key)
         if (!valueAlreadyExists) {
           table[PREFIX + key] = value;
         }
       }
 
       // Build the substitution table
-      for (var i = 0; i < lines.length; i++) {
+      for (let i = 0; i < lines.length; i++) {
         lines[i] = sanitize(lines[i]);
-        var match_data = lines[i].match(/^define\s+(\w+)\s+(\S+)/);
+        let match_data = lines[i].match(/^define\s+(\w+)\s+(\S+)/);
         if (match_data) {
           add(match_data[1], sanitize(match_data[2]));
           lines[i] = ""; // We're done with this preprocessor directive, so delete it
@@ -2147,7 +2139,7 @@ function SimulatorWidget(node) {
     // Assembles one line of code.
     // Returns true if it assembled successfully, false otherwise.
     function assembleLine(input, lineno, symbols) {
-      var label, command, param, addr;
+      let label, command, param, addr;
 
       // Find command or label
       if (input.match(/^\w+:/)) {
@@ -2199,7 +2191,7 @@ function SimulatorWidget(node) {
       if (command === "DCB") {
         return DCB(param);
       }
-      for (var o = 0; o < Opcodes.length; o++) {
+      for (let o = 0; o < Opcodes.length; o++) {
         if (Opcodes[o][0] === command) {
           if (checkSingle(param, Opcodes[o][11])) {
             return true;
@@ -2244,12 +2236,12 @@ function SimulatorWidget(node) {
     }
 
     function DCB(param) {
-      var values, number, str, ch;
+      let values, number, str, ch;
       values = param.split(",");
       if (values.length === 0) {
         return false;
       }
-      for (var v = 0; v < values.length; v++) {
+      for (let v = 0; v < values.length; v++) {
         str = values[v];
         if (str) {
           ch = str.substring(0, 1);
@@ -2274,16 +2266,16 @@ function SimulatorWidget(node) {
     // Returns the (positive) value if successful, otherwise -1
     function tryParseByteOperand(param, symbols) {
       if (param.match(/^\w+$/)) {
-        var lookupVal = symbols.lookup(param); // Substitute symbol by actual value, then proceed
+        let lookupVal = symbols.lookup(param); // Substitute symbol by actual value, then proceed
         if (lookupVal) {
           param = lookupVal;
         }
       }
 
-      var value;
+      let value;
 
       // Is it a hexadecimal operand?
-      var match_data = param.match(/^\$([0-9a-f]{1,2})$/i);
+      let match_data = param.match(/^\$([0-9a-f]{1,2})$/i);
       if (match_data) {
         value = parseInt(match_data[1], 16);
       } else {
@@ -2312,16 +2304,16 @@ function SimulatorWidget(node) {
     // Returns the (positive) value if successful, otherwise -1
     function tryParseWordOperand(param, symbols) {
       if (param.match(/^\w+$/)) {
-        var lookupVal = symbols.lookup(param); // Substitute symbol by actual value, then proceed
+        let lookupVal = symbols.lookup(param); // Substitute symbol by actual value, then proceed
         if (lookupVal) {
           param = lookupVal;
         }
       }
 
-      var value;
+      let value;
 
       // Is it a hexadecimal operand?
-      var match_data = param.match(/^\$([0-9a-f]{3,4})$/i);
+      let match_data = param.match(/^\$([0-9a-f]{3,4})$/i);
       if (match_data) {
         value = parseInt(match_data[1], 16);
       } else {
@@ -2342,7 +2334,7 @@ function SimulatorWidget(node) {
 
     // Common branch function for all branches (BCC, BCS, BEQ, BNE..)
     function checkBranch(param, opcode) {
-      var addr;
+      let addr;
       if (opcode === null) {
         return false;
       }
@@ -2357,7 +2349,7 @@ function SimulatorWidget(node) {
       }
       pushByte(opcode);
 
-      var distance = addr - defaultCodePC - 1;
+      let distance = addr - defaultCodePC - 1;
 
       if (distance < -128 || distance > 127) {
         wasOutOfRangeBranch = true;
@@ -2370,14 +2362,14 @@ function SimulatorWidget(node) {
 
     // Check if param is immediate and push value
     function checkImmediate(param, opcode, symbols) {
-      var value, label, hilo, addr;
+      let value, label, hilo, addr;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^#([\w\$]+)$/i);
+      let match_data = param.match(/^#([\w\$]+)$/i);
       if (match_data) {
-        var operand = tryParseByteOperand(match_data[1], symbols);
+        let operand = tryParseByteOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushByte(operand);
@@ -2413,14 +2405,14 @@ function SimulatorWidget(node) {
 
     // Check if param is indirect and push value
     function checkIndirect(param, opcode, symbols) {
-      var value;
+      let value;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^\(([\w\$]+)\)$/i);
+      let match_data = param.match(/^\(([\w\$]+)\)$/i);
       if (match_data) {
-        var operand = tryParseWordOperand(match_data[1], symbols);
+        let operand = tryParseWordOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushWord(operand);
@@ -2432,14 +2424,14 @@ function SimulatorWidget(node) {
 
     // Check if param is indirect X and push value
     function checkIndirectX(param, opcode, symbols) {
-      var value;
+      let value;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^\(([\w\$]+),X\)$/i);
+      let match_data = param.match(/^\(([\w\$]+),X\)$/i);
       if (match_data) {
-        var operand = tryParseByteOperand(match_data[1], symbols);
+        let operand = tryParseByteOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushByte(operand);
@@ -2451,14 +2443,14 @@ function SimulatorWidget(node) {
 
     // Check if param is indirect Y and push value
     function checkIndirectY(param, opcode, symbols) {
-      var value;
+      let value;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^\(([\w\$]+)\),Y$/i);
+      let match_data = param.match(/^\(([\w\$]+)\),Y$/i);
       if (match_data) {
-        var operand = tryParseByteOperand(match_data[1], symbols);
+        let operand = tryParseByteOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushByte(operand);
@@ -2483,12 +2475,12 @@ function SimulatorWidget(node) {
 
     // Check if param is ZP and push value
     function checkZeroPage(param, opcode, symbols) {
-      var value;
+      let value;
       if (opcode === null) {
         return false;
       }
 
-      var operand = tryParseByteOperand(param, symbols);
+      let operand = tryParseByteOperand(param, symbols);
       if (operand >= 0) {
         pushByte(opcode);
         pushByte(operand);
@@ -2500,14 +2492,14 @@ function SimulatorWidget(node) {
 
     // Check if param is ABSX and push value
     function checkAbsoluteX(param, opcode, symbols) {
-      var number, value, addr;
+      let number, value, addr;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^([\w\$]+),X$/i);
+      let match_data = param.match(/^([\w\$]+),X$/i);
       if (match_data) {
-        var operand = tryParseWordOperand(match_data[1], symbols);
+        let operand = tryParseWordOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushWord(operand);
@@ -2537,14 +2529,14 @@ function SimulatorWidget(node) {
 
     // Check if param is ABSY and push value
     function checkAbsoluteY(param, opcode, symbols) {
-      var number, value, addr;
+      let number, value, addr;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^([\w\$]+),Y$/i);
+      let match_data = param.match(/^([\w\$]+),Y$/i);
       if (match_data) {
-        var operand = tryParseWordOperand(match_data[1], symbols);
+        let operand = tryParseWordOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushWord(operand);
@@ -2573,14 +2565,14 @@ function SimulatorWidget(node) {
 
     // Check if param is ZPX and push value
     function checkZeroPageX(param, opcode, symbols) {
-      var number, value;
+      let number, value;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^([\w\$]+),X$/i);
+      let match_data = param.match(/^([\w\$]+),X$/i);
       if (match_data) {
-        var operand = tryParseByteOperand(match_data[1], symbols);
+        let operand = tryParseByteOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushByte(operand);
@@ -2593,14 +2585,14 @@ function SimulatorWidget(node) {
 
     // Check if param is ZPY and push value
     function checkZeroPageY(param, opcode, symbols) {
-      var number, value;
+      let number, value;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^([\w\$]+),Y$/i);
+      let match_data = param.match(/^([\w\$]+),Y$/i);
       if (match_data) {
-        var operand = tryParseByteOperand(match_data[1], symbols);
+        let operand = tryParseByteOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushByte(operand);
@@ -2613,14 +2605,14 @@ function SimulatorWidget(node) {
 
     // Check if param is ABS and push value
     function checkAbsolute(param, opcode, symbols) {
-      var value, number, addr;
+      let value, number, addr;
       if (opcode === null) {
         return false;
       }
 
-      var match_data = param.match(/^([\w\$]+)$/i);
+      let match_data = param.match(/^([\w\$]+)$/i);
       if (match_data) {
-        var operand = tryParseWordOperand(match_data[1], symbols);
+        let operand = tryParseWordOperand(match_data[1], symbols);
         if (operand >= 0) {
           pushByte(opcode);
           pushWord(operand);
@@ -2660,9 +2652,9 @@ function SimulatorWidget(node) {
     }
 
     function openPopup(content, title) {
-      var w = window.open('about:blank', title, 'width=500,height=300,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
+      let w = window.open('about:blank', title, 'width=500,height=300,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
 
-      var html = "<html><head>";
+      let html = "<html><head>";
       html += "<link href='style.css' rel='stylesheet' type='text/css' />";
       html += "<title>" + title + "</title></head><body>";
       html += "<pre><div class='popup'>";
@@ -2680,7 +2672,7 @@ function SimulatorWidget(node) {
     }
 
     // TODO: Create separate disassembler object?
-    var addressingModes = [
+    let addressingModes = [
       null,
       'Imm',
       'ZP',
@@ -2696,7 +2688,7 @@ function SimulatorWidget(node) {
       'BRA'
     ];
 
-    var instructionLength = {
+    let instructionLength = {
       Imm: 2,
       ZP: 2,
       ZPX: 2,
@@ -2712,9 +2704,9 @@ function SimulatorWidget(node) {
     };
 
     function getModeAndCode(byte) {
-      var index;
-      var line = Opcodes.filter(function(line) {
-        var possibleIndex = line.indexOf(byte);
+      let index;
+      let line = Opcodes.filter(function(line) {
+        let possibleIndex = line.indexOf(byte);
         if (possibleIndex > -1) {
           index = possibleIndex;
           return true;
@@ -2735,13 +2727,13 @@ function SimulatorWidget(node) {
     }
 
     function createInstruction(address) {
-      var bytes = [];
-      var opCode;
-      var args = [];
-      var mode;
+      let bytes = [];
+      let opCode;
+      let args = [];
+      let mode;
 
       function isAccumulatorInstruction() {
-        var accumulatorBytes = [0x0a, 0x4a, 0x2a, 0x6a];
+        let accumulatorBytes = [0x0a, 0x4a, 0x2a, 0x6a];
         if (accumulatorBytes.indexOf(bytes[0]) > -1) {
           return true;
         }
@@ -2753,10 +2745,10 @@ function SimulatorWidget(node) {
 
       //This is gnarly, but unavoidably so?
       function formatArguments() {
-        var argsString = args.map(num2hex).reverse().join('');
+        let argsString = args.map(num2hex).reverse().join('');
 
         if (isBranchInstruction()) {
-          var destination = address + 2;
+          let destination = address + 2;
           if (args[0] > 0x7f) {
             destination -= 0x100 - args[0];
           } else {
@@ -2800,8 +2792,8 @@ function SimulatorWidget(node) {
           args.push(arg);
         },
         toString: function() {
-          var bytesString = bytes.map(num2hex).join(' ');
-          var padding = Array(11 - bytesString.length).join(' ');
+          let bytesString = bytes.map(num2hex).join(' ');
+          let padding = Array(11 - bytesString.length).join(' ');
           return '$' + addr2hex(address) + '    ' + bytesString + padding + opCode +
             ' ' + formatArguments(args);
         }
@@ -2809,11 +2801,11 @@ function SimulatorWidget(node) {
     }
 
     function upload() {
-	var file = document.getElementById("uploadFilename").files[0];
-	var fileReader = new FileReader();
+	let file = document.getElementById("uploadFilename").files[0];
+	let fileReader = new FileReader();
 	fileReader.onload = function(fileLoadedEvent) 
 	{
-		var textFromFileLoaded = fileLoadedEvent.target.result;
+		let textFromFileLoaded = fileLoadedEvent.target.result;
 		document.getElementById("code").value = textFromFileLoaded;
 		simulator.stop();
 		ui.initialize(); 
@@ -2822,7 +2814,7 @@ function SimulatorWidget(node) {
     }
 
     function sendDownload(filename, text) {
-      var element = document.createElement('a');
+      let element = document.createElement('a');
       element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
       element.setAttribute('download', filename);
 
@@ -2835,21 +2827,21 @@ function SimulatorWidget(node) {
     }
 
     function download() {
-      var text = document.getElementById("code").value;
-      var filename = "6502-assembler-source.txt";
+      let text = document.getElementById("code").value;
+      let filename = "6502-assembler-source.txt";
     
       sendDownload(filename, text);
     }
 
     function disassemble() {
-      var startAddress = 0x600;
-      var currentAddress = startAddress;
-      var endAddress = startAddress + codeLen;
-      var instructions = [];
-      var length;
-      var inst;
-      var byte;
-      var modeAndCode;
+      let startAddress = 0x600;
+      let currentAddress = startAddress;
+      let endAddress = startAddress + codeLen;
+      let instructions = [];
+      let length;
+      let inst;
+      let byte;
+      let modeAndCode;
 
       while (currentAddress < endAddress) {
         inst = createInstruction(currentAddress);
@@ -2860,7 +2852,7 @@ function SimulatorWidget(node) {
         length = instructionLength[modeAndCode.mode];
         inst.setModeAndCode(modeAndCode);
 
-        for (var i = 1; i < length; i++) {
+        for (let i = 1; i < length; i++) {
           currentAddress++;
           byte = memory.get(currentAddress);
           inst.addByte(byte);
@@ -2870,7 +2862,7 @@ function SimulatorWidget(node) {
         currentAddress++;
       }
 
-      var html = 'Address  Hexdump   Dissassembly\n';
+      let html = 'Address  Hexdump   Dissassembly\n';
       html += '-------------------------------\n';
       html += instructions.join('\n');
       openPopup(html, 'Disassembly');
@@ -2895,9 +2887,9 @@ function SimulatorWidget(node) {
   }
 
   function num2hex(nr) {
-    var str = "0123456789abcdef";
-    var hi = ((nr & 0xf0) >> 4);
-    var lo = (nr & 15);
+    let str = "0123456789abcdef";
+    let hi = ((nr & 0xf0) >> 4);
+    let lo = (nr & 15);
     return str.substring(hi, hi + 1) + str.substring(lo, lo + 1);
   }
 
