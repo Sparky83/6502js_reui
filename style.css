@@ -119,7 +119,6 @@
   /* width: 100%; */
   height: 100px;
   overflow: auto;
-  display: none;
   grid-row: 5/6;
   grid-column: 1/4;
   resize: both;
@@ -143,5 +142,9 @@
 
 .popup {
   font-size: 14pt;
+}
+
+.hidden {
+  display: none !important;
 }
 
