@@ -17,13 +17,14 @@
 
 import UI from "./js/ui.js";
 import Simulator from "./js/simulator.js";
+import Display from "./js/display.js";
 import {num2hex, addr2hex, message} from "./js/utils.js";
 
 function SimulatorWidget(node) {
   let ui = new UI(node);
-  let display = Display();
-  let screen = Screen();
   let memory = Memory();
+  let display = new Display(node, memory);
+  let screen = Screen();
   let labels = Labels();
   let simulator = new Simulator(node, ui, display, screen, memory);
   let assembler = Assembler();
@@ -78,51 +79,6 @@ function SimulatorWidget(node) {
     codeElem.value = text;
   }
 
-
-  // ####################################  DISPLAY  #######################################################
-
-  function Display() {
-    let displayArray = [];
-    let palette = [
-      "#000000", "#ffffff", "#880000", "#aaffee",
-      "#cc44cc", "#00cc55", "#0000aa", "#eeee77",
-      "#dd8855", "#664400", "#ff7777", "#333333",
-      "#777777", "#aaff66", "#0088ff", "#bbbbbb"
-    ];
-    let ctx;
-    let width;
-    let height;
-    let pixelSize;
-    let numX = 32;
-    let numY = 32;
-
-    function initialize() {
-      let canvas = node.querySelector('.screen');
-      width = canvas.width;
-      height = canvas.height;
-      pixelSize = width / numX;
-      ctx = canvas.getContext('2d');
-      reset();
-    }
-
-    function reset() {
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, width, height);
-    }
-
-    function updatePixel(addr) {
-      ctx.fillStyle = palette[memory.get(addr) & 0x0f];
-      let y = Math.floor((addr - 0x200) / 32);
-      let x = (addr - 0x200) % 32;
-      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-    }
-
-    return {
-      initialize: initialize,
-      reset: reset,
-      updatePixel: updatePixel
-    };
-  }
 
   // ####################################  SCREEN  #######################################################
 

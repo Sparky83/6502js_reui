@@ -300,7 +300,7 @@ export default class Simulator {
         },
 
         i0d: () => {
-            this.regA |= this.memory.get(popWord());
+            this.regA |= this.memory.get(this.popWord());
             this.ORA();
         },
 
@@ -427,12 +427,12 @@ export default class Simulator {
         },
 
         i2c: () => {
-            let value = this.memory.get(popWord());
+            let value = this.memory.get(this.popWord());
             BIT(value);
         },
 
         i2d: () => {
-            let value = this.memory.get(popWord());
+            let value = this.memory.get(this.popWord());
             this.regA &= value;
             this.AND()();
         },
@@ -690,7 +690,7 @@ export default class Simulator {
         },
 
         i6c: () => {
-            this.regPC = this.memory.getWord(popWord());
+            this.regPC = this.memory.getWord(this.popWord());
             //JMP
         },
 
@@ -818,17 +818,17 @@ export default class Simulator {
         },
 
         i8c: () => {
-            this.memory.storeByte(popWord(), this.regY);
+            this.memory.storeByte(this.popWord(), this.regY);
             //STY
         },
 
         i8d: () => {
-            this.memory.storeByte(popWord(), this.regA);
+            this.memory.storeByte(this.popWord(), this.regA);
             //STA
         },
 
         i8e: () => {
-            this.memory.storeByte(popWord(), this.regX);
+            this.memory.storeByte(this.popWord(), this.regX);
             //STX
         },
 
@@ -869,7 +869,7 @@ export default class Simulator {
         },
 
         i99: () => {
-            this.memory.storeByte(popWord() + this.regY, this.regA);
+            this.memory.storeByte(this.popWord() + this.regY, this.regA);
             //STA
         },
 
@@ -934,17 +934,17 @@ export default class Simulator {
         },
 
         iac: () => {
-            this.regY = this.memory.get(popWord());
+            this.regY = this.memory.get(this.popWord());
             this.LDY();
         },
 
         iad: () => {
-            this.regA = this.memory.get(popWord());
+            this.regA = this.memory.get(this.popWord());
             this.LDA();
         },
 
         iae: () => {
-            this.regX = this.memory.get(popWord());
+            this.regX = this.memory.get(this.popWord());
             this.LDX();
         },
 
@@ -1062,13 +1062,13 @@ export default class Simulator {
         },
 
         icc: () => {
-            let value = this.memory.get(popWord());
+            let value = this.memory.get(this.popWord());
             doCompare(this.regY, value);
             //CPY
         },
 
         icd: () => {
-            let value = this.memory.get(popWord());
+            let value = this.memory.get(this.popWord());
             doCompare(this.regA, value);
             //CPA
         },
@@ -1185,7 +1185,7 @@ export default class Simulator {
         },
 
         iec: () => {
-            let value = this.memory.get(popWord());
+            let value = this.memory.get(this.popWord());
             doCompare(this.regX, value);
             //CPX
         },
@@ -1287,7 +1287,7 @@ export default class Simulator {
 
     // Pops a little-endian word
     popWord() {
-        return popByte() + (popByte() << 8);
+        return this.popByte() + (this.popByte() << 8);
     }
 
     // Executes the assembled code
