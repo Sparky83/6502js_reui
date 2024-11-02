@@ -204,17 +204,19 @@ export default class Assembler {
             return DCB(param);
         if (command in Opcodes) {
             let relevantOpcodes = Opcodes[command];
-            let checks = [{ "func": this.checkSingle, "opcodeIndex": 11 }, { "func": this.checkImmediate, "opcodeIndex": 1 },
-                          { "func": this.checkZeroPage, "opcodeIndex": 2 }, { "func": this.checkZeroPageX, "opcodeIndex": 3 },
-                          { "func": this.checkZeroPageY, "opcodeIndex": 4 }, { "func": this.checkAbsoluteX, "opcodeIndex": 6 },
-                          { "func": this.checkAbsoluteY, "opcodeIndex": 7 }, { "func": this.checkIndirect, "opcodeIndex": 8 },
-                          { "func": this.checkIndirectX, "opcodeIndex": 9 }, { "func": this.checkIndirectY, "opcodeIndex": 10 },
-                          { "func": this.checkAbsolute, "opcodeIndex": 5 }, { "func": this.checkBranch, "opcodeIndex": 12 }];
+            let checks = [{ "func": this.checkSingle, "opcodeIndex": 10 }, { "func": this.checkImmediate, "opcodeIndex": 0 },
+                          { "func": this.checkZeroPage, "opcodeIndex": 1 }, { "func": this.checkZeroPageX, "opcodeIndex": 2 },
+                          { "func": this.checkZeroPageY, "opcodeIndex": 3 }, { "func": this.checkAbsoluteX, "opcodeIndex": 5 },
+                          { "func": this.checkAbsoluteY, "opcodeIndex": 6 }, { "func": this.checkIndirect, "opcodeIndex": 7 },
+                          { "func": this.checkIndirectX, "opcodeIndex": 8 }, { "func": this.checkIndirectY, "opcodeIndex": 9 },
+                          { "func": this.checkAbsolute, "opcodeIndex": 4 }, { "func": this.checkBranch, "opcodeIndex": 11 }];
             for (let i = 0; i < checks.length; i++) {
                 const index = checks[i].opcodeIndex;
                 let func = checks[i].func;
-                if (func.bind(this)(param, relevantOpcodes[index], symbols)) 
+                console.log(func);
+                if (func.bind(this)(param, relevantOpcodes[index], symbols)) {
                     return true;
+                }
             }
         }
         return false; // Unknown syntax

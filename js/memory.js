@@ -1,4 +1,5 @@
 
+import { num2hex } from "./utils.js";
 
 export default class Memory {
 
