@@ -261,7 +261,7 @@ export default class Simulator {
         },
 
         i01: () => {
-            let zp = (popByte() + this.regX) & 0xff;
+            let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
             this.regA |= value;
@@ -329,13 +329,13 @@ export default class Simulator {
         },
 
         i15: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             this.regA |= this.memory.get(addr);
             this.ORA();
         },
 
         i16: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
             setCarryFlagFromBit7(value);
             value = (value << 1) & 0xff;
@@ -378,7 +378,7 @@ export default class Simulator {
         },
 
         i21: () => {
-            let zp = (popByte() + this.regX) & 0xff;
+            let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
             this.regA &= value;
@@ -464,14 +464,14 @@ export default class Simulator {
         },
 
         i35: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             this.regA &= this.memory.get(addr);
             this.AND()();
         },
 
         i36: () => {
             let sf = carrySet();
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
             setCarryFlagFromBit7(value);
             value = (value << 1) & 0xff;
@@ -516,7 +516,7 @@ export default class Simulator {
         },
 
         i41: () => {
-            let zp = (popByte() + this.regX) & 0xff;
+            let zp = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.getWord(zp);
             this.regA ^= this.memory.get(value);
             this.EOR();
@@ -591,13 +591,13 @@ export default class Simulator {
         },
 
         i55: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             this.regA ^= this.memory.get(addr);
             this.EOR();
         },
 
         i56: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
             setCarryFlagFromBit0(value);
             value = value >> 1;
@@ -640,7 +640,7 @@ export default class Simulator {
         },
 
         i61: () => {
-            let zp = (popByte() + this.regX) & 0xff;
+            let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
             testADC(value);
@@ -731,7 +731,7 @@ export default class Simulator {
         },
 
         i75: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
             testADC(value);
             //ADC
@@ -739,7 +739,7 @@ export default class Simulator {
 
         i76: () => {
             let sf = carrySet();
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
             setCarryFlagFromBit0(value);
             value = value >> 1;
@@ -784,24 +784,24 @@ export default class Simulator {
         },
 
         i81: () => {
-            let zp = (popByte() + this.regX) & 0xff;
+            let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             this.memory.storeByte(addr, this.regA);
             //STA
         },
 
         i84: () => {
-            this.memory.storeByte(popByte(), this.regY);
+            this.memory.storeByte(this.popByte(), this.regY);
             //STY
         },
 
         i85: () => {
-            this.memory.storeByte(popByte(), this.regA);
+            this.memory.storeByte(this.popByte(), this.regA);
             //STA
         },
 
         i86: () => {
-            this.memory.storeByte(popByte(), this.regX);
+            this.memory.storeByte(this.popByte(), this.regX);
             //STX
         },
 
@@ -848,17 +848,17 @@ export default class Simulator {
         },
 
         i94: () => {
-            this.memory.storeByte((popByte() + this.regX) & 0xff, this.regY);
+            this.memory.storeByte((this.popByte() + this.regX) & 0xff, this.regY);
             //STY
         },
 
         i95: () => {
-            this.memory.storeByte((popByte() + this.regX) & 0xff, this.regA);
+            this.memory.storeByte((this.popByte() + this.regX) & 0xff, this.regA);
             //STA
         },
 
         i96: () => {
-            this.memory.storeByte((popByte() + this.regY) & 0xff, this.regX);
+            this.memory.storeByte((this.popByte() + this.regY) & 0xff, this.regX);
             //STX
         },
 
@@ -885,12 +885,12 @@ export default class Simulator {
         },
 
         ia0: () => {
-            this.regY = this.popByte();
+            this.regY = this.this.popByte();
             this.LDY();
         },
 
         ia1: () => {
-            let zp = (popByte() + this.regX) & 0xff;
+            let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             this.regA = this.memory.get(addr);
             this.LDA();
@@ -902,17 +902,17 @@ export default class Simulator {
         },
 
         ia4: () => {
-            this.regY = this.memory.get(popByte());
+            this.regY = this.memory.get(this.popByte());
             this.LDY();
         },
 
         ia5: () => {
-            this.regA = this.memory.get(popByte());
+            this.regA = this.memory.get(this.popByte());
             this.LDA();
         },
 
         ia6: () => {
-            this.regX = this.memory.get(popByte());
+            this.regX = this.memory.get(this.popByte());
             this.LDX();
         },
 
@@ -964,17 +964,17 @@ export default class Simulator {
         },
 
         ib4: () => {
-            this.regY = this.memory.get((popByte() + this.regX) & 0xff);
+            this.regY = this.memory.get((this.popByte() + this.regX) & 0xff);
             this.LDY();
         },
 
         ib5: () => {
-            this.regA = this.memory.get((popByte() + this.regX) & 0xff);
+            this.regA = this.memory.get((this.popByte() + this.regX) & 0xff);
             this.LDA();
         },
 
         ib6: () => {
-            this.regX = this.memory.get((popByte() + this.regY) & 0xff);
+            this.regX = this.memory.get((this.popByte() + this.regY) & 0xff);
             this.LDX();
         },
 
@@ -1019,7 +1019,7 @@ export default class Simulator {
         },
 
         ic1: () => {
-            let zp = (popByte() + this.regX) & 0xff;
+            let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
             doCompare(this.regA, value);
@@ -1027,13 +1027,13 @@ export default class Simulator {
         },
 
         ic4: () => {
-            let value = this.memory.get(popByte());
+            let value = this.memory.get(this.popByte());
             doCompare(this.regY, value);
             //CPY
         },
 
         ic5: () => {
-            let value = this.memory.get(popByte());
+            let value = this.memory.get(this.popByte());
             doCompare(this.regA, value);
             //CPA
         },
@@ -1095,13 +1095,13 @@ export default class Simulator {
         },
 
         id5: () => {
-            let value = this.memory.get((popByte() + this.regX) & 0xff);
+            let value = this.memory.get((this.popByte() + this.regX) & 0xff);
             doCompare(this.regA, value);
             //CMP
         },
 
         id6: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             DEC(addr);
         },
 
@@ -1136,7 +1136,7 @@ export default class Simulator {
         },
 
         ie1: () => {
-            let zp = (popByte() + this.regX) & 0xff;
+            let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
             testSBC(value);
@@ -1144,7 +1144,7 @@ export default class Simulator {
         },
 
         ie4: () => {
-            let value = this.memory.get(popByte());
+            let value = this.memory.get(this.popByte());
             doCompare(this.regX, value);
             //CPX
         },
@@ -1219,14 +1219,14 @@ export default class Simulator {
         },
 
         if5: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
             testSBC(value);
             //SBC
         },
 
         if6: () => {
-            let addr = (popByte() + this.regX) & 0xff;
+            let addr = (this.popByte() + this.regX) & 0xff;
             INC(addr);
         },
 

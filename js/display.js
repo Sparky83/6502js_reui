@@ -1,5 +1,5 @@
 
-class Display {
+export default class Display {
     node;
     memory;
     displayArray = [];
@@ -17,6 +17,7 @@ class Display {
     numY = 32;
 
     constructor(rootElem, memory) {
+        memory.display = this;
         this.node = rootElem;
         this.memory = memory;
     }
@@ -42,5 +43,3 @@ class Display {
         this.ctx.fillRect(x * this.pixelSize, y * this.pixelSize, this.pixelSize, this.pixelSize);
     }
 }
-
-export default Display;
