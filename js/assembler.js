@@ -213,7 +213,6 @@ export default class Assembler {
             for (let i = 0; i < checks.length; i++) {
                 const index = checks[i].opcodeIndex;
                 let func = checks[i].func;
-                console.log(func);
                 if (func.bind(this)(param, relevantOpcodes[index], symbols)) {
                     return true;
                 }
