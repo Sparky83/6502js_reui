@@ -57,7 +57,7 @@ export default class Memory {
     }
 
     getWord(addr) {
-        return get(addr) + (get(addr + 1) << 8);
+        return this.get(addr) + (this.get(addr + 1) << 8);
     }
 
     // Poke a byte, don't touch any registers

@@ -54,18 +54,18 @@ export default class UI {
 
     setState(state) {
         let node = this.node;
-        node.querySelector('.assembleButton').toggleAttribute('disabled', !state.assemble);
         if (state.run) {
             node.querySelector('.runButton').toggleAttribute('disabled', !state.run[0]);
             node.querySelector('.runButton').value = state.run[1];
         }
+        node.querySelector('.assembleButton').toggleAttribute('disabled', !state.assemble);
         node.querySelector('.resetButton').toggleAttribute('disabled', !state.reset);
         node.querySelector('.hexdumpButton').toggleAttribute('disabled', !state.hexdump);
         node.querySelector('.disassembleButton').toggleAttribute('disabled', !state.disassemble);
         node.querySelector('.debug').toggleAttribute('disabled', !state.debug[0]);
-        node.querySelector('.debug').toggleAttribute('checked', state.debug[1]);
         node.querySelector('.stepButton').toggleAttribute('disabled', !state.debug[1]);
         node.querySelector('.gotoButton').toggleAttribute('disabled', !state.debug[1]);
+        node.querySelector('.debug').toggleAttribute('checked', state.debug[1]);
         this.currentState = state;
     }
 
@@ -101,21 +101,13 @@ export default class UI {
         state ? this.setState(this.states["debugging"]) : this.setState(this.states["postDebugging"]);
     }
 
-
     captureTabInEditor(e) {
-        // Tab Key
-        if (e.keyCode === 9) {
-
-            // Prevent focus loss
-            e.preventDefault();
-
+        if (e.keyCode === 9) { // Tab Key
+            e.preventDefault(); // Prevent focus loss
             // Insert tab at caret position (instead of losing focus)
-            let caretStart = this.selectionStart,
-                caretEnd = this.selectionEnd,
-                currentValue = this.value;
-
-            this.value = currentValue.substring(0, caretStart) + "\t" + currentValue.substring(caretEnd);
-
+            let caretStart = this.selectionStart;
+            let caretEnd = this.selectionEnd;
+            this.value = this.value.substring(0, caretStart) + "\t" + this.value.substring(caretEnd);
             // Move cursor forwards one (after tab)
             this.selectionStart = this.selectionEnd = caretStart + 1;
         }

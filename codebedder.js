@@ -21,7 +21,7 @@ code-bedder {
   --code-bedder-font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   --code-bedder-font-size: 14px;
   --code-bedder-caret-color: #000000;
-  --code-bedder-selection-background: hsla(0, 0%, 100%, 0.2);
+  --code-bedder-selection-background: hsla(212, 85%, 41%, 0.35);
 
   --code-bedder-scrollbar-size: 0.5rem;
   --code-bedder-scrollbar-radius: 0.25rem;

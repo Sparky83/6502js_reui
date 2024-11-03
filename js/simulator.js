@@ -98,7 +98,6 @@ export default class Simulator {
         this.regP |= 1;
     }
 
-
     CLV() {
         this.regP &= 0xbf;
     }
@@ -153,9 +152,9 @@ export default class Simulator {
 
     doCompare(reg, val) {
         if (reg >= val) {
-            SEC();
+            this.SEC();
         } else {
-            CLC();
+            this.CLC();
         }
         val = (reg - val);
         this.setNVflags(val);
@@ -164,13 +163,13 @@ export default class Simulator {
     testSBC(value) {
         let tmp, w;
         if ((this.regA ^ value) & 0x80) {
-            setOverflow();
+            this.setOverflow();
         } else {
-            CLV();
+            this.CLV();
         }
 
-        if (decimalMode()) {
-            tmp = 0xf + (this.regA & 0xf) - (value & 0xf) + carrySet();
+        if (this.decimalMode()) {
+            tmp = 0xf + (this.regA & 0xf) - (value & 0xf) + this.carrySet();
             if (tmp < 0x10) {
                 w = 0;
                 tmp -= 6;
@@ -180,78 +179,78 @@ export default class Simulator {
             }
             w += 0xf0 + (this.regA & 0xf0) - (value & 0xf0);
             if (w < 0x100) {
-                CLC();
-                if (overflowSet() && w < 0x80) {
-                    CLV();
+                this.CLC();
+                if (this.overflowSet() && w < 0x80) {
+                    this.CLV();
                 }
                 w -= 0x60;
             } else {
-                SEC();
-                if (overflowSet() && w >= 0x180) {
-                    CLV();
+                this.SEC();
+                if (this.overflowSet() && w >= 0x180) {
+                    this.CLV();
                 }
             }
             w += tmp;
         } else {
-            w = 0xff + this.regA - value + carrySet();
+            w = 0xff + this.regA - value + this.carrySet();
             if (w < 0x100) {
-                CLC();
-                if (overflowSet() && w < 0x80) {
-                    CLV();
+                this.CLC();
+                if (this.overflowSet() && w < 0x80) {
+                    this.CLV();
                 }
             } else {
-                SEC();
-                if (overflowSet() && w >= 0x180) {
-                    CLV();
+                this.SEC();
+                if (this.overflowSet() && w >= 0x180) {
+                    this.CLV();
                 }
             }
         }
         this.regA = w & 0xff;
-        setNVflagsForRegA();
+        this.setNVflagsForRegA();
     }
 
     testADC(value) {
         let tmp;
         if ((this.regA ^ value) & 0x80) {
-            CLV();
+            this.CLV();
         } else {
-            setOverflow();
+            this.setOverflow();
         }
 
-        if (decimalMode()) {
-            tmp = (this.regA & 0xf) + (value & 0xf) + carrySet();
+        if (this.decimalMode()) {
+            tmp = (this.regA & 0xf) + (value & 0xf) + this.carrySet();
             if (tmp >= 10) {
                 tmp = 0x10 | ((tmp + 6) & 0xf);
             }
             tmp += (this.regA & 0xf0) + (value & 0xf0);
             if (tmp >= 160) {
-                SEC();
-                if (overflowSet() && tmp >= 0x180) {
-                    CLV();
+                this.SEC();
+                if (this.overflowSet() && tmp >= 0x180) {
+                    this.CLV();
                 }
                 tmp += 0x60;
             } else {
-                CLC();
-                if (overflowSet() && tmp < 0x80) {
-                    CLV();
+                this.CLC();
+                if (this.overflowSet() && tmp < 0x80) {
+                    this.CLV();
                 }
             }
         } else {
-            tmp = this.regA + value + carrySet();
+            tmp = this.regA + value + this.carrySet();
             if (tmp >= 0x100) {
-                SEC();
-                if (overflowSet() && tmp >= 0x180) {
-                    CLV();
+                this.SEC();
+                if (this.overflowSet() && tmp >= 0x180) {
+                    this.CLV();
                 }
             } else {
-                CLC();
-                if (overflowSet() && tmp < 0x80) {
-                    CLV();
+                this.CLC();
+                if (this.overflowSet() && tmp < 0x80) {
+                    this.CLV();
                 }
             }
         }
         this.regA = tmp & 0xff;
-        setNVflagsForRegA();
+        this.setNVflagsForRegA();
     }
 
     instructions = {
@@ -284,7 +283,7 @@ export default class Simulator {
         },
 
         i08: () => {
-            stackPush(this.regP | 0x30);
+            this.stackPush(this.regP | 0x30);
             //PHP
         },
 
@@ -305,7 +304,7 @@ export default class Simulator {
         },
 
         i0e: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr);
             setCarryFlagFromBit7(value);
             value = (value << 1) & 0xff;
@@ -315,8 +314,8 @@ export default class Simulator {
 
         i10: () => {
             let offset = this.popByte();
-            if (!negativeSet()) {
-                jumpBranch(offset);
+            if (!this.negativeSet()) {
+                this.jumpBranch(offset);
             }
             //BPL
         },
@@ -344,23 +343,23 @@ export default class Simulator {
         },
 
         i18: () => {
-            CLC();
+            this.CLC();
         },
 
         i19: () => {
-            let addr = popWord() + this.regY;
+            let addr = this.popWord() + this.regY;
             this.regA |= this.memory.get(addr);
             this.ORA();
         },
 
         i1d: () => {
-            let addr = popWord() + this.regX;
+            let addr = this.popWord() + this.regX;
             this.regA |= this.memory.get(addr);
             this.ORA();
         },
 
         i1e: () => {
-            let addr = popWord() + this.regX;
+            let addr = this.popWord() + this.regX;
             let value = this.memory.get(addr);
             setCarryFlagFromBit7(value);
             value = (value << 1) & 0xff;
@@ -369,10 +368,10 @@ export default class Simulator {
         },
 
         i20: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let currAddr = this.regPC - 1;
-            stackPush(((currAddr >> 8) & 0xff));
-            stackPush((currAddr & 0xff));
+            this.stackPush(((currAddr >> 8) & 0xff));
+            this.stackPush((currAddr & 0xff));
             this.regPC = addr;
             //JSR
         },
@@ -382,23 +381,23 @@ export default class Simulator {
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
             this.regA &= value;
-            this.AND()();
+            this.AND();
         },
 
         i24: () => {
             let zp = this.popByte();
             let value = this.memory.get(zp);
-            BIT(value);
+            this.BIT(value);
         },
 
         i25: () => {
             let zp = this.popByte();
             this.regA &= this.memory.get(zp);
-            this.AND()();
+            this.AND();
         },
 
         i26: () => {
-            let sf = carrySet();
+            let sf = this.carrySet();
             let addr = this.popByte();
             let value = this.memory.get(addr);
             setCarryFlagFromBit7(value);
@@ -409,17 +408,17 @@ export default class Simulator {
         },
 
         i28: () => {
-            this.regP = stackPop() | 0x30; // There is no B bit!
+            this.regP = this.stackPop() | 0x30; // There is no B bit!
             //PLP
         },
 
         i29: () => {
             this.regA &= this.popByte();
-            this.AND()();
+            this.AND();
         },
 
         i2a: () => {
-            let sf = carrySet();
+            let sf = this.carrySet();
             setCarryFlagFromBit7(this.regA);
             this.regA = (this.regA << 1) & 0xff;
             this.regA |= sf;
@@ -428,18 +427,18 @@ export default class Simulator {
 
         i2c: () => {
             let value = this.memory.get(this.popWord());
-            BIT(value);
+            this.BIT(value);
         },
 
         i2d: () => {
             let value = this.memory.get(this.popWord());
             this.regA &= value;
-            this.AND()();
+            this.AND();
         },
 
         i2e: () => {
-            let sf = carrySet();
-            let addr = popWord();
+            let sf = this.carrySet();
+            let addr = this.popWord();
             let value = this.memory.get(addr);
             setCarryFlagFromBit7(value);
             value = (value << 1) & 0xff;
@@ -450,8 +449,8 @@ export default class Simulator {
 
         i30: () => {
             let offset = this.popByte();
-            if (negativeSet()) {
-                jumpBranch(offset);
+            if (this.negativeSet()) {
+                this.jumpBranch(offset);
             }
             //BMI
         },
@@ -460,17 +459,17 @@ export default class Simulator {
             let zp = this.popByte();
             let value = this.memory.getWord(zp) + this.regY;
             this.regA &= this.memory.get(value);
-            this.AND()();
+            this.AND();
         },
 
         i35: () => {
             let addr = (this.popByte() + this.regX) & 0xff;
             this.regA &= this.memory.get(addr);
-            this.AND()();
+            this.AND();
         },
 
         i36: () => {
-            let sf = carrySet();
+            let sf = this.carrySet();
             let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
             setCarryFlagFromBit7(value);
@@ -481,26 +480,26 @@ export default class Simulator {
         },
 
         i38: () => {
-            SEC();
+            this.SEC();
         },
 
         i39: () => {
-            let addr = popWord() + this.regY;
+            let addr = this.popWord() + this.regY;
             let value = this.memory.get(addr);
             this.regA &= value;
-            this.AND()();
+            this.AND();
         },
 
         i3d: () => {
-            let addr = popWord() + this.regX;
+            let addr = this.popWord() + this.regX;
             let value = this.memory.get(addr);
             this.regA &= value;
-            this.AND()();
+            this.AND();
         },
 
         i3e: () => {
-            let sf = carrySet();
-            let addr = popWord() + this.regX;
+            let sf = this.carrySet();
+            let addr = this.popWord() + this.regX;
             let value = this.memory.get(addr);
             setCarryFlagFromBit7(value);
             value = (value << 1) & 0xff;
@@ -510,8 +509,8 @@ export default class Simulator {
         },
 
         i40: () => {
-            this.regP = stackPop() | 0x30; // There is no B bit!
-            this.regPC = stackPop() | (stackPop() << 8);
+            this.regP = this.stackPop() | 0x30; // There is no B bit!
+            this.regPC = this.stackPop() | (this.stackPop() << 8);
             //RTI
         },
 
@@ -532,14 +531,14 @@ export default class Simulator {
         i46: () => {
             let addr = this.popByte() & 0xff;
             let value = this.memory.get(addr);
-            setCarryFlagFromBit0(value);
+            this.setCarryFlagFromBit0(value);
             value = value >> 1;
             this.memory.storeByte(addr, value);
             this.LSR(value);
         },
 
         i48: () => {
-            stackPush(this.regA);
+            this.stackPush(this.regA);
             //PHA
         },
 
@@ -549,27 +548,27 @@ export default class Simulator {
         },
 
         i4a: () => {
-            setCarryFlagFromBit0(this.regA);
+            this.setCarryFlagFromBit0(this.regA);
             this.regA = this.regA >> 1;
             this.LSR(this.regA);
         },
 
         i4c: () => {
-            this.regPC = popWord();
+            this.regPC = this.popWord();
             //JMP
         },
 
         i4d: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr);
             this.regA ^= value;
             this.EOR();
         },
 
         i4e: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr);
-            setCarryFlagFromBit0(value);
+            this.setCarryFlagFromBit0(value);
             value = value >> 1;
             this.memory.storeByte(addr, value);
             this.LSR(value);
@@ -577,8 +576,8 @@ export default class Simulator {
 
         i50: () => {
             let offset = this.popByte();
-            if (!overflowSet()) {
-                jumpBranch(offset);
+            if (!this.overflowSet()) {
+                this.jumpBranch(offset);
             }
             //BVC
         },
@@ -599,7 +598,7 @@ export default class Simulator {
         i56: () => {
             let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
-            setCarryFlagFromBit0(value);
+            this.setCarryFlagFromBit0(value);
             value = value >> 1;
             this.memory.storeByte(addr, value);
             this.LSR(value);
@@ -612,30 +611,30 @@ export default class Simulator {
         },
 
         i59: () => {
-            let addr = popWord() + this.regY;
+            let addr = this.popWord() + this.regY;
             let value = this.memory.get(addr);
             this.regA ^= value;
             this.EOR();
         },
 
         i5d: () => {
-            let addr = popWord() + this.regX;
+            let addr = this.popWord() + this.regX;
             let value = this.memory.get(addr);
             this.regA ^= value;
             this.EOR();
         },
 
         i5e: () => {
-            let addr = popWord() + this.regX;
+            let addr = this.popWord() + this.regX;
             let value = this.memory.get(addr);
-            setCarryFlagFromBit0(value);
+            this.setCarryFlagFromBit0(value);
             value = value >> 1;
             this.memory.storeByte(addr, value);
             this.LSR(value);
         },
 
         i60: () => {
-            this.regPC = (stackPop() | (stackPop() << 8)) + 1;
+            this.regPC = (this.stackPop() | (this.stackPop() << 8)) + 1;
             //RTS
         },
 
@@ -643,22 +642,22 @@ export default class Simulator {
             let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
-            testADC(value);
+            this.testADC(value);
             //ADC
         },
 
         i65: () => {
             let addr = this.popByte();
             let value = this.memory.get(addr);
-            testADC(value);
+            this.testADC(value);
             //ADC
         },
 
         i66: () => {
-            let sf = carrySet();
+            let sf = this.carrySet();
             let addr = this.popByte();
             let value = this.memory.get(addr);
-            setCarryFlagFromBit0(value);
+            this.setCarryFlagFromBit0(value);
             value = value >> 1;
             if (sf) {
                 value |= 0x80;
@@ -668,20 +667,20 @@ export default class Simulator {
         },
 
         i68: () => {
-            this.regA = stackPop();
-            setNVflagsForRegA();
+            this.regA = this.stackPop();
+            this.setNVflagsForRegA();
             //PLA
         },
 
         i69: () => {
             let value = this.popByte();
-            testADC(value);
+            this.testADC(value);
             //ADC
         },
 
         i6a: () => {
-            let sf = carrySet();
-            setCarryFlagFromBit0(this.regA);
+            let sf = this.carrySet();
+            this.setCarryFlagFromBit0(this.regA);
             this.regA = this.regA >> 1;
             if (sf) {
                 this.regA |= 0x80;
@@ -695,17 +694,17 @@ export default class Simulator {
         },
 
         i6d: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr);
-            testADC(value);
+            this.testADC(value);
             //ADC
         },
 
         i6e: () => {
-            let sf = carrySet();
-            let addr = popWord();
+            let sf = this.carrySet();
+            let addr = this.popWord();
             let value = this.memory.get(addr);
-            setCarryFlagFromBit0(value);
+            this.setCarryFlagFromBit0(value);
             value = value >> 1;
             if (sf) {
                 value |= 0x80;
@@ -716,8 +715,8 @@ export default class Simulator {
 
         i70: () => {
             let offset = this.popByte();
-            if (overflowSet()) {
-                jumpBranch(offset);
+            if (this.overflowSet()) {
+                this.jumpBranch(offset);
             }
             //BVS
         },
@@ -726,22 +725,22 @@ export default class Simulator {
             let zp = this.popByte();
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr + this.regY);
-            testADC(value);
+            this.testADC(value);
             //ADC
         },
 
         i75: () => {
             let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
-            testADC(value);
+            this.testADC(value);
             //ADC
         },
 
         i76: () => {
-            let sf = carrySet();
+            let sf = this.carrySet();
             let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
-            setCarryFlagFromBit0(value);
+            this.setCarryFlagFromBit0(value);
             value = value >> 1;
             if (sf) {
                 value |= 0x80;
@@ -757,24 +756,24 @@ export default class Simulator {
         },
 
         i79: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr + this.regY);
-            testADC(value);
+            this.testADC(value);
             //ADC
         },
 
         i7d: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr + this.regX);
-            testADC(value);
+            this.testADC(value);
             //ADC
         },
 
         i7e: () => {
-            let sf = carrySet();
-            let addr = popWord() + this.regX;
+            let sf = this.carrySet();
+            let addr = this.popWord() + this.regX;
             let value = this.memory.get(addr);
-            setCarryFlagFromBit0(value);
+            this.setCarryFlagFromBit0(value);
             value = value >> 1;
             if (sf) {
                 value |= 0x80;
@@ -807,13 +806,13 @@ export default class Simulator {
 
         i88: () => {
             this.regY = (this.regY - 1) & 0xff;
-            setNVflagsForRegY();
+            this.setNVflagsForRegY();
             //DEY
         },
 
         i8a: () => {
             this.regA = this.regX & 0xff;
-            setNVflagsForRegA();
+            this.setNVflagsForRegA();
             //TXA
         },
 
@@ -834,8 +833,8 @@ export default class Simulator {
 
         i90: () => {
             let offset = this.popByte();
-            if (!carrySet()) {
-                jumpBranch(offset);
+            if (!this.carrySet()) {
+                this.jumpBranch(offset);
             }
             //BCC
         },
@@ -864,7 +863,7 @@ export default class Simulator {
 
         i98: () => {
             this.regA = this.regY & 0xff;
-            setNVflagsForRegA();
+            this.setNVflagsForRegA();
             //TYA
         },
 
@@ -879,13 +878,13 @@ export default class Simulator {
         },
 
         i9d: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             this.memory.storeByte(addr + this.regX, this.regA);
             //STA
         },
 
         ia0: () => {
-            this.regY = this.this.popByte();
+            this.regY = this.popByte();
             this.LDY();
         },
 
@@ -918,7 +917,7 @@ export default class Simulator {
 
         ia8: () => {
             this.regY = this.regA & 0xff;
-            setNVflagsForRegY();
+            this.setNVflagsForRegY();
             //TAY
         },
 
@@ -929,7 +928,7 @@ export default class Simulator {
 
         iaa: () => {
             this.regX = this.regA & 0xff;
-            setNVflagsForRegX();
+            this.setNVflagsForRegX();
             //TAX
         },
 
@@ -950,8 +949,8 @@ export default class Simulator {
 
         ib0: () => {
             let offset = this.popByte();
-            if (carrySet()) {
-                jumpBranch(offset);
+            if (this.carrySet()) {
+                this.jumpBranch(offset);
             }
             //BCS
         },
@@ -979,11 +978,11 @@ export default class Simulator {
         },
 
         ib8: () => {
-            CLV();
+            this.CLV();
         },
 
         ib9: () => {
-            let addr = popWord() + this.regY;
+            let addr = this.popWord() + this.regY;
             this.regA = this.memory.get(addr);
             this.LDA();
         },
@@ -995,26 +994,26 @@ export default class Simulator {
         },
 
         ibc: () => {
-            let addr = popWord() + this.regX;
+            let addr = this.popWord() + this.regX;
             this.regY = this.memory.get(addr);
             this.LDY();
         },
 
         ibd: () => {
-            let addr = popWord() + this.regX;
+            let addr = this.popWord() + this.regX;
             this.regA = this.memory.get(addr);
             this.LDA();
         },
 
         ibe: () => {
-            let addr = popWord() + this.regY;
+            let addr = this.popWord() + this.regY;
             this.regX = this.memory.get(addr);
             this.LDX();
         },
 
         ic0: () => {
             let value = this.popByte();
-            doCompare(this.regY, value);
+            this.doCompare(this.regY, value);
             //CPY
         },
 
@@ -1022,66 +1021,66 @@ export default class Simulator {
             let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
-            doCompare(this.regA, value);
+            this.doCompare(this.regA, value);
             //CPA
         },
 
         ic4: () => {
             let value = this.memory.get(this.popByte());
-            doCompare(this.regY, value);
+            this.doCompare(this.regY, value);
             //CPY
         },
 
         ic5: () => {
             let value = this.memory.get(this.popByte());
-            doCompare(this.regA, value);
+            this.doCompare(this.regA, value);
             //CPA
         },
 
         ic6: () => {
             let zp = this.popByte();
-            DEC(zp);
+            this.DEC(zp);
         },
 
         ic8: () => {
             this.regY = (this.regY + 1) & 0xff;
-            setNVflagsForRegY();
+            this.setNVflagsForRegY();
             //INY
         },
 
         ic9: () => {
             let value = this.popByte();
-            doCompare(this.regA, value);
+            this.doCompare(this.regA, value);
             //CMP
         },
 
         ica: () => {
             this.regX = (this.regX - 1) & 0xff;
-            setNVflagsForRegX();
+            this.setNVflagsForRegX();
             //DEX
         },
 
         icc: () => {
             let value = this.memory.get(this.popWord());
-            doCompare(this.regY, value);
+            this.doCompare(this.regY, value);
             //CPY
         },
 
         icd: () => {
             let value = this.memory.get(this.popWord());
-            doCompare(this.regA, value);
+            this.doCompare(this.regA, value);
             //CPA
         },
 
         ice: () => {
-            let addr = popWord();
-            DEC(addr);
+            let addr = this.popWord();
+            this.DEC(addr);
         },
 
         id0: () => {
             let offset = this.popByte();
-            if (!zeroSet()) {
-                jumpBranch(offset);
+            if (!this.zeroSet()) {
+                this.jumpBranch(offset);
             }
             //BNE
         },
@@ -1090,19 +1089,19 @@ export default class Simulator {
             let zp = this.popByte();
             let addr = this.memory.getWord(zp) + this.regY;
             let value = this.memory.get(addr);
-            doCompare(this.regA, value);
+            this.doCompare(this.regA, value);
             //CMP
         },
 
         id5: () => {
             let value = this.memory.get((this.popByte() + this.regX) & 0xff);
-            doCompare(this.regA, value);
+            this.doCompare(this.regA, value);
             //CMP
         },
 
         id6: () => {
             let addr = (this.popByte() + this.regX) & 0xff;
-            DEC(addr);
+            this.DEC(addr);
         },
 
         id8: () => {
@@ -1111,27 +1110,27 @@ export default class Simulator {
         },
 
         id9: () => {
-            let addr = popWord() + this.regY;
+            let addr = this.popWord() + this.regY;
             let value = this.memory.get(addr);
-            doCompare(this.regA, value);
+            this.doCompare(this.regA, value);
             //CMP
         },
 
         idd: () => {
-            let addr = popWord() + this.regX;
+            let addr = this.popWord() + this.regX;
             let value = this.memory.get(addr);
-            doCompare(this.regA, value);
+            this.doCompare(this.regA, value);
             //CMP
         },
 
         ide: () => {
-            let addr = popWord() + this.regX;
-            DEC(addr);
+            let addr = this.popWord() + this.regX;
+            this.DEC(addr);
         },
 
         ie0: () => {
             let value = this.popByte();
-            doCompare(this.regX, value);
+            this.doCompare(this.regX, value);
             //CPX
         },
 
@@ -1139,37 +1138,37 @@ export default class Simulator {
             let zp = (this.popByte() + this.regX) & 0xff;
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr);
-            testSBC(value);
+            this.testSBC(value);
             //SBC
         },
 
         ie4: () => {
             let value = this.memory.get(this.popByte());
-            doCompare(this.regX, value);
+            this.doCompare(this.regX, value);
             //CPX
         },
 
         ie5: () => {
             let addr = this.popByte();
             let value = this.memory.get(addr);
-            testSBC(value);
+            this.testSBC(value);
             //SBC
         },
 
         ie6: () => {
             let zp = this.popByte();
-            INC(zp);
+            this.INC(zp);
         },
 
         ie8: () => {
             this.regX = (this.regX + 1) & 0xff;
-            setNVflagsForRegX();
+            this.setNVflagsForRegX();
             //INX
         },
 
         ie9: () => {
             let value = this.popByte();
-            testSBC(value);
+            this.testSBC(value);
             //SBC
         },
 
@@ -1186,26 +1185,26 @@ export default class Simulator {
 
         iec: () => {
             let value = this.memory.get(this.popWord());
-            doCompare(this.regX, value);
+            this.doCompare(this.regX, value);
             //CPX
         },
 
         ied: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr);
-            testSBC(value);
+            this.testSBC(value);
             //SBC
         },
 
         iee: () => {
-            let addr = popWord();
-            INC(addr);
+            let addr = this.popWord();
+            this.INC(addr);
         },
 
         if0: () => {
             let offset = this.popByte();
-            if (zeroSet()) {
-                jumpBranch(offset);
+            if (this.zeroSet()) {
+                this.jumpBranch(offset);
             }
             //BEQ
         },
@@ -1214,20 +1213,20 @@ export default class Simulator {
             let zp = this.popByte();
             let addr = this.memory.getWord(zp);
             let value = this.memory.get(addr + this.regY);
-            testSBC(value);
+            this.testSBC(value);
             //SBC
         },
 
         if5: () => {
             let addr = (this.popByte() + this.regX) & 0xff;
             let value = this.memory.get(addr);
-            testSBC(value);
+            this.testSBC(value);
             //SBC
         },
 
         if6: () => {
             let addr = (this.popByte() + this.regX) & 0xff;
-            INC(addr);
+            this.INC(addr);
         },
 
         if8: () => {
@@ -1236,22 +1235,22 @@ export default class Simulator {
         },
 
         if9: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr + this.regY);
-            testSBC(value);
+            this.testSBC(value);
             //SBC
         },
 
         ifd: () => {
-            let addr = popWord();
+            let addr = this.popWord();
             let value = this.memory.get(addr + this.regX);
-            testSBC(value);
+            this.testSBC(value);
             //SBC
         },
 
         ife: () => {
-            let addr = popWord() + this.regX;
-            INC(addr);
+            let addr = this.popWord() + this.regX;
+            this.INC(addr);
         },
 
         ierr: () => {
@@ -1294,7 +1293,7 @@ export default class Simulator {
     runBinary() {
         if (this.codeRunning) {
             // Switch OFF everything
-            stop();
+            this.stop();
             this.ui.stop();
         } else {
             this.ui.play();
