@@ -1,5 +1,6 @@
 
 import { num2hex, addr2hex, message } from "./utils.js";
+import Opcodes from "../data/opcodes.json" with {type: "json"};
 
 export default class Simulator {
     regA = 0;
@@ -29,6 +30,7 @@ export default class Simulator {
     display;
     screen;
     memory;
+    op2mnem;
 
     constructor(rootElem, uiObj, displayObj, screenObj, memoryObj) {
         this.node = rootElem;
@@ -36,6 +38,11 @@ export default class Simulator {
         this.display = displayObj;
         this.screen = screenObj;
         this.memory = memoryObj;
+        this.op2mnem = {};
+        for (const mnem in Opcodes) {
+            for(const op of Opcodes[mnem])
+                if (op !== null) this.op2mnem[op.substr(2)] = mnem;
+        }
     }
 
     // Set zero this.AND() negative processor flags based on result
@@ -925,6 +932,16 @@ export default class Simulator {
             this.regA = this.popByte();
             this.LDA();
         },
+        
+        iLDA: (op) => {
+            let param = ["ad","bd","b9","a1"].includes(op) ? this.popWord() : this.popByte();
+            let regXY = ["b9","b1"].includes(op) ? this.regY : this.regX;
+            let shift = ["b5","bd","b9","b1"].includes(op) ? regXY : 0;
+            let paramShift = op === "a1" ? regXY : 0;
+            param = ["a1","b1"].includes(op) ? this.memory.get(param + paramShift) : param;
+            this.regA = op == "a9" ? param : this.memory.get(param + shift) & 0xff;
+            this.LDA();
+        },
 
         iaa: () => {
             this.regX = this.regA & 0xff;
@@ -1324,9 +1341,13 @@ export default class Simulator {
             instructionName = '0' + instructionName;
         }
         let instruction = this.instructions['i' + instructionName];
+        if (["a9","a5","b5","ad","bd","b9","a1","b1"].includes(instructionName)){
+            let name = "i"+this.op2mnem[instructionName];
+            instruction = this.instructions[name];
+        }
 
         if (instruction) {
-            instruction();
+            instruction(instructionName);
         } else {
             this.instructions.ierr();
         }
