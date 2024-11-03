@@ -216,7 +216,7 @@ export default class Simulator {
         this.setNVflagsForRegA();
     }
 
-    testADC(value) {
+    ADC(value) {
         let tmp;
         if ((this.regA ^ value) & 0x80) {
             this.CLV();
@@ -261,6 +261,37 @@ export default class Simulator {
     }
 
     instructions = {
+
+        iADC: (op) => {
+            let param = ["6d","7d","79"].includes(op) ? this.popWord() : this.popByte();
+            let regXY = ["79","71"].includes(op) ? this.regY : this.regX;
+            let shift = ["75","7d","79","71"].includes(op) ? regXY : 0;
+            let paramShift = op === "61" ? regXY : 0;
+            param = ["61","71"].includes(op) ? this.memory.getWord(param + paramShift) : param;
+            param = op == "69" ? param : this.memory.get(param + shift) & 0xff;
+            this.ADC(param);
+        },
+        
+        iLDA: (op) => {
+            let param = ["ad","bd","b9"].includes(op) ? this.popWord() : this.popByte();
+            let regXY = ["b9","b1"].includes(op) ? this.regY : this.regX;
+            let shift = ["b5","bd","b9","b1"].includes(op) ? regXY : 0;
+            let paramShift = op === "a1" ? regXY : 0;
+            param = ["a1","b1"].includes(op) ? this.memory.getWord(param + paramShift) : param;
+            this.regA = op == "a9" ? param : this.memory.get(param + shift) & 0xff;
+            this.LDA();
+        },
+        
+        iAND: (op) => {
+            let param = ["2d","3d","39"].includes(op) ? this.popWord() : this.popByte();
+            let regXY = ["39","31"].includes(op) ? this.regY : this.regX;
+            let shift = ["35","3d","39","31"].includes(op) ? regXY : 0;
+            let paramShift = op === "21" ? regXY : 0;
+            param = ["21","31"].includes(op) ? this.memory.getWord(param + paramShift) : param;
+            this.regA &= op == "29" ? param : this.memory.get(param + shift) & 0xff;
+            this.AND();
+        },
+
         i00: () => {
             this.codeRunning = false;
             //BRK
@@ -383,24 +414,10 @@ export default class Simulator {
             //JSR
         },
 
-        i21: () => {
-            let zp = (this.popByte() + this.regX) & 0xff;
-            let addr = this.memory.getWord(zp);
-            let value = this.memory.get(addr);
-            this.regA &= value;
-            this.AND();
-        },
-
         i24: () => {
             let zp = this.popByte();
             let value = this.memory.get(zp);
             this.BIT(value);
-        },
-
-        i25: () => {
-            let zp = this.popByte();
-            this.regA &= this.memory.get(zp);
-            this.AND();
         },
 
         i26: () => {
@@ -419,11 +436,6 @@ export default class Simulator {
             //PLP
         },
 
-        i29: () => {
-            this.regA &= this.popByte();
-            this.AND();
-        },
-
         i2a: () => {
             let sf = this.carrySet();
             setCarryFlagFromBit7(this.regA);
@@ -435,12 +447,6 @@ export default class Simulator {
         i2c: () => {
             let value = this.memory.get(this.popWord());
             this.BIT(value);
-        },
-
-        i2d: () => {
-            let value = this.memory.get(this.popWord());
-            this.regA &= value;
-            this.AND();
         },
 
         i2e: () => {
@@ -462,19 +468,6 @@ export default class Simulator {
             //BMI
         },
 
-        i31: () => {
-            let zp = this.popByte();
-            let value = this.memory.getWord(zp) + this.regY;
-            this.regA &= this.memory.get(value);
-            this.AND();
-        },
-
-        i35: () => {
-            let addr = (this.popByte() + this.regX) & 0xff;
-            this.regA &= this.memory.get(addr);
-            this.AND();
-        },
-
         i36: () => {
             let sf = this.carrySet();
             let addr = (this.popByte() + this.regX) & 0xff;
@@ -488,20 +481,6 @@ export default class Simulator {
 
         i38: () => {
             this.SEC();
-        },
-
-        i39: () => {
-            let addr = this.popWord() + this.regY;
-            let value = this.memory.get(addr);
-            this.regA &= value;
-            this.AND();
-        },
-
-        i3d: () => {
-            let addr = this.popWord() + this.regX;
-            let value = this.memory.get(addr);
-            this.regA &= value;
-            this.AND();
         },
 
         i3e: () => {
@@ -645,21 +624,6 @@ export default class Simulator {
             //RTS
         },
 
-        i61: () => {
-            let zp = (this.popByte() + this.regX) & 0xff;
-            let addr = this.memory.getWord(zp);
-            let value = this.memory.get(addr);
-            this.testADC(value);
-            //ADC
-        },
-
-        i65: () => {
-            let addr = this.popByte();
-            let value = this.memory.get(addr);
-            this.testADC(value);
-            //ADC
-        },
-
         i66: () => {
             let sf = this.carrySet();
             let addr = this.popByte();
@@ -679,12 +643,6 @@ export default class Simulator {
             //PLA
         },
 
-        i69: () => {
-            let value = this.popByte();
-            this.testADC(value);
-            //ADC
-        },
-
         i6a: () => {
             let sf = this.carrySet();
             this.setCarryFlagFromBit0(this.regA);
@@ -698,13 +656,6 @@ export default class Simulator {
         i6c: () => {
             this.regPC = this.memory.getWord(this.popWord());
             //JMP
-        },
-
-        i6d: () => {
-            let addr = this.popWord();
-            let value = this.memory.get(addr);
-            this.testADC(value);
-            //ADC
         },
 
         i6e: () => {
@@ -728,21 +679,6 @@ export default class Simulator {
             //BVS
         },
 
-        i71: () => {
-            let zp = this.popByte();
-            let addr = this.memory.getWord(zp);
-            let value = this.memory.get(addr + this.regY);
-            this.testADC(value);
-            //ADC
-        },
-
-        i75: () => {
-            let addr = (this.popByte() + this.regX) & 0xff;
-            let value = this.memory.get(addr);
-            this.testADC(value);
-            //ADC
-        },
-
         i76: () => {
             let sf = this.carrySet();
             let addr = (this.popByte() + this.regX) & 0xff;
@@ -760,20 +696,6 @@ export default class Simulator {
             this.regP |= 0x04;
             throw new Erthis.ROR("Interrupts not implemented");
             //SEI
-        },
-
-        i79: () => {
-            let addr = this.popWord();
-            let value = this.memory.get(addr + this.regY);
-            this.testADC(value);
-            //ADC
-        },
-
-        i7d: () => {
-            let addr = this.popWord();
-            let value = this.memory.get(addr + this.regX);
-            this.testADC(value);
-            //ADC
         },
 
         i7e: () => {
@@ -895,13 +817,6 @@ export default class Simulator {
             this.LDY();
         },
 
-        ia1: () => {
-            let zp = (this.popByte() + this.regX) & 0xff;
-            let addr = this.memory.getWord(zp);
-            this.regA = this.memory.get(addr);
-            this.LDA();
-        },
-
         ia2: () => {
             this.regX = this.popByte();
             this.LDX();
@@ -910,11 +825,6 @@ export default class Simulator {
         ia4: () => {
             this.regY = this.memory.get(this.popByte());
             this.LDY();
-        },
-
-        ia5: () => {
-            this.regA = this.memory.get(this.popByte());
-            this.LDA();
         },
 
         ia6: () => {
@@ -928,21 +838,6 @@ export default class Simulator {
             //TAY
         },
 
-        ia9: () => {
-            this.regA = this.popByte();
-            this.LDA();
-        },
-        
-        iLDA: (op) => {
-            let param = ["ad","bd","b9","a1"].includes(op) ? this.popWord() : this.popByte();
-            let regXY = ["b9","b1"].includes(op) ? this.regY : this.regX;
-            let shift = ["b5","bd","b9","b1"].includes(op) ? regXY : 0;
-            let paramShift = op === "a1" ? regXY : 0;
-            param = ["a1","b1"].includes(op) ? this.memory.get(param + paramShift) : param;
-            this.regA = op == "a9" ? param : this.memory.get(param + shift) & 0xff;
-            this.LDA();
-        },
-
         iaa: () => {
             this.regX = this.regA & 0xff;
             this.setNVflagsForRegX();
@@ -952,11 +847,6 @@ export default class Simulator {
         iac: () => {
             this.regY = this.memory.get(this.popWord());
             this.LDY();
-        },
-
-        iad: () => {
-            this.regA = this.memory.get(this.popWord());
-            this.LDA();
         },
 
         iae: () => {
@@ -972,21 +862,9 @@ export default class Simulator {
             //BCS
         },
 
-        ib1: () => {
-            let zp = this.popByte();
-            let addr = this.memory.getWord(zp) + this.regY;
-            this.regA = this.memory.get(addr);
-            this.LDA();
-        },
-
         ib4: () => {
             this.regY = this.memory.get((this.popByte() + this.regX) & 0xff);
             this.LDY();
-        },
-
-        ib5: () => {
-            this.regA = this.memory.get((this.popByte() + this.regX) & 0xff);
-            this.LDA();
         },
 
         ib6: () => {
@@ -996,12 +874,6 @@ export default class Simulator {
 
         ib8: () => {
             this.CLV();
-        },
-
-        ib9: () => {
-            let addr = this.popWord() + this.regY;
-            this.regA = this.memory.get(addr);
-            this.LDA();
         },
 
         iba: () => {
@@ -1014,12 +886,6 @@ export default class Simulator {
             let addr = this.popWord() + this.regX;
             this.regY = this.memory.get(addr);
             this.LDY();
-        },
-
-        ibd: () => {
-            let addr = this.popWord() + this.regX;
-            this.regA = this.memory.get(addr);
-            this.LDA();
         },
 
         ibe: () => {
@@ -1341,7 +1207,8 @@ export default class Simulator {
             instructionName = '0' + instructionName;
         }
         let instruction = this.instructions['i' + instructionName];
-        if (["a9","a5","b5","ad","bd","b9","a1","b1"].includes(instructionName)){
+        if (["a9","a5","b5","ad","bd","b9","a1","b1","69","65","75","6d","7d","79","61","71","29","25","35","2d","3d","39","21","31"].includes(instructionName)){
+        //if (["a9","a5","b5","ad","bd","b9","a1","b1"].includes(instructionName)){
             let name = "i"+this.op2mnem[instructionName];
             instruction = this.instructions[name];
         }
